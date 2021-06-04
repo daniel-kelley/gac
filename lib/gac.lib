@@ -83,13 +83,14 @@ amp(gain) = *(select2(gain<0,gain,0));
 // #### Usage
 //
 // ```
-// _ : bpf(freq,q) : _
+// _ : bpf(freq,q,gain) : _
 // ```
 //
 // Where:
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
+// * `gain`: Gain [control]
 //
 // ---
 // bpf:
@@ -97,25 +98,27 @@ amp(gain) = *(select2(gain<0,gain,0));
 //     - _: signal
 //     - freq: freq
 //     - q: Q
+//     - gain: control
 //   out:
 //     - _: signal
 // ...
 // STATUS: unknown
 //----------------------------
-bpf(f,q) = fi.resonbp(f,q);
+bpf(freq,q,gain) = fi.resonbp(freq,q,gain);
 
 //-------`(gac.hpf)`----------
 // Highpass filter
 // #### Usage
 //
 // ```
-// _ : hpf(freq,q) : _
+// _ : hpf(freq,q,gain) : _
 // ```
 //
 // Where:
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
+// * `gain`: Gain [control]
 //
 // ---
 // hpf:
@@ -123,25 +126,27 @@ bpf(f,q) = fi.resonbp(f,q);
 //     - _: signal
 //     - freq: freq
 //     - q: Q
+//     - gain: control
 //   out:
 //     - _: signal
 // ...
 // STATUS: unknown
 //----------------------------
-hpf(f,q) = fi.resonhp(f,q);
+hpf(freq,q,gain) = fi.resonhp(freq,q,gain);
 
 //-------`(gac.lpf)`----------
 // Lowpass filter
 // #### Usage
 //
 // ```
-// _ : lpf(freq,q) : _
+// _ : lpf(freq,q,gain) : _
 // ```
 //
 // Where:
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
+// * `gain`: Gain [control]
 //
 // ---
 // lpf:
@@ -149,12 +154,13 @@ hpf(f,q) = fi.resonhp(f,q);
 //     - _: signal
 //     - freq: freq
 //     - q: Q
+//     - gain: control
 //   out:
 //     - _: signal
 // ...
 // STATUS: unknown
 //----------------------------
-lpf(f,q) = fi.resonlp(f,q);
+lpf(freq,q,gain) = fi.resonlp(freq,q,gain);
 
 //-------`(gac.sin)`----------
 // Sine wave oscillator

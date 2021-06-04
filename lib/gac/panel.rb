@@ -115,8 +115,8 @@ Q_MIN = 0.0;
 Q_MAX = 100.0;
 Q_STEP = 0.01;
 Q_DEFAULT = 1;
-q2control(n) = n/Q_MAX;
-control2q(n) = n*Q_MAX;
+Q2control(n) = n/Q_MAX;
+control2Q(n) = n*Q_MAX;
 
 COUNT_MIN = 0;
 COUNT_MAX = gac.N - 1;
