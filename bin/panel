@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+#
+# Create GAC faust panels
+#
+
+require 'optparse'
+require_relative "../lib/gac"
+
+fn = :generate
+
+op = OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename($0)} [options] [file]"
+  opts.on('--info', '-i', 'Show library info') do
+    fn = :info
+  end
+  opts.on('--help', '-h', 'Issue this message') do
+    puts opts
+    exit 0
+  end
+end
+op.parse!
+
+gac = GAC::Panel.new
+if ARGV.length == 1
+  case fn
+  when :generate
+    puts gac.generate(ARGV[0])
+  else
+    puts "Confused about what to do"
+  end
+elsif fn == :info
+  gac.info
+else
+  puts op.help
+end

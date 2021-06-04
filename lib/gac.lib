@@ -1,0 +1,534 @@
+// GMP Audio Controls (GAC)
+//
+// (c) 2021 Daniel Kelley <dkelley@gmp.san-jose.ca.us>
+//
+// https://spdx.org/licenses/LGPL-2.1-or-later.html
+//
+
+import("stdfaust.lib");
+
+declare name "GMP Audio Controls Library";
+declare author "Daniel Kelley";
+declare version "0.1";
+declare copyright "(c) 2021 Daniel Kelley <dkelley@gmp.san-jose.ca.us>";
+declare license "LGPL-2.1-or-later";
+
+//================================= Constants ==================================
+//
+
+// Fixed lookup table size
+// This sets the maximum size for lookup, lookupi, and phasor blocks
+// STATUS: works
+// ---
+// N:
+//   constant: 256
+// ...
+N = 256;
+
+//================================= Audio Blocks ===============================
+//
+
+//-------`(gac.)mult`----------
+// Multiplies two audio signals.
+// Ring modulator primitive.
+//
+// #### Usage
+//
+// ```
+// _ : mult(mod) : _
+// ```
+//
+// Where:
+//
+// * `mod`: modulator
+//
+// ---
+// mult:
+//   in:
+//     - _: signal
+//     - mod: signal
+//   out:
+//     - _: signal
+// ...
+// STATUS: unknown
+//----------------------------
+mult(mod) = *(mod);
+
+//-------`(gac.amp)`----------
+// Controllable amplifier
+// #### Usage
+//
+// ```
+// _ : amp(in,gain) : _
+// ```
+//
+// Where:
+//
+// * `gain`: amplifier gain.
+//    if gain is less than or equal to zero, then the output is zero
+// ---
+// amp:
+//   in:
+//     - _: signal
+//     - gain: control
+//   out:
+//     - _: signal
+// ...
+// STATUS: unknown
+//----------------------------
+amp(gain) = *(select2(gain<0,gain,0));
+
+//-------`(gac.bpf)`----------
+// Bandpass filter
+// #### Usage
+//
+// ```
+// _ : bpf(freq,q) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Bandpass center [freq]
+// * `q`:    Filter [Q]
+//
+// ---
+// bpf:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - q: Q
+//   out:
+//     - _: signal
+// ...
+// STATUS: unknown
+//----------------------------
+bpf(f,q) = fi.resonbp(f,q);
+
+//-------`(gac.hpf)`----------
+// Highpass filter
+// #### Usage
+//
+// ```
+// _ : hpf(freq,q) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Bandpass center [freq]
+// * `q`:    Filter [Q]
+//
+// ---
+// hpf:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - q: Q
+//   out:
+//     - _: signal
+// ...
+// STATUS: unknown
+//----------------------------
+hpf(f,q) = fi.resonhp(f,q);
+
+//-------`(gac.lpf)`----------
+// Lowpass filter
+// #### Usage
+//
+// ```
+// _ : lpf(freq,q) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Bandpass center [freq]
+// * `q`:    Filter [Q]
+//
+// ---
+// lpf:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - q: Q
+//   out:
+//     - _: signal
+// ...
+// STATUS: unknown
+//----------------------------
+lpf(f,q) = fi.resonlp(f,q);
+
+//-------`(gac.sin)`----------
+// Sine wave oscillator
+// #### Usage
+//
+// ```
+// sine(freq) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Oscillator freq
+//
+// ---
+// sine:
+//   in:
+//     - freq: freq
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+sine(f) = os.oscsin(f);
+
+//-------`(gac.tri)`----------
+// Triangle wave oscillator
+// #### Usage
+//
+// ```
+// tri(freq) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Oscillator freq
+//
+// ---
+// tri:
+//   in:
+//     - freq: freq
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+tri(f) = os.triangle(f);
+
+//-------`(gac.saw)`----------
+// Sawtooth wave oscillator
+// #### Usage
+//
+// ```
+// saw(freq) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Oscillator freq
+//
+// ---
+// saw:
+//   in:
+//     - freq: freq
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+saw(f) = os.sawtooth(f);
+
+//-------`(gac.pulse)`----------
+// Pulse wave oscillator
+// #### Usage
+//
+// ```
+// pulse(freq,duty) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Oscillator freq
+// * `duty`: Duty Cycle (0..1)
+//
+// ---
+// pulse:
+//   in:
+//     - freq: freq
+//     - duty: control
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+pulse(f,w) = os.pulsetrain(f,w);
+
+
+//-------`(gac.osc)`----------
+// Variable shape oscillator
+// #### Usage
+//
+// ```
+// osc(freq,shape) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Oscillator freq
+// * `shape`: Waveform shape (0..1)
+//
+// ---
+// osc:
+//   in:
+//     - freq: freq
+//     - shape: control
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+
+osc(f,s) = (sin_o+tri_o+saw_o+sq_o) with {
+  gv = s * 4.0;
+  duty =                 ba.listInterp((0.5,0.5,0.5,0.5,1.0),gv);
+  sin_o = sine(f)      * ba.listInterp((1.0,0.0,0.0,0.0,0.0),gv);
+  tri_o = tri(f)       * ba.listInterp((0.0,1.0,0.0,0.0,0.0),gv);
+  saw_o = saw(f)       * ba.listInterp((0.0,0.0,1.0,0.0,0.0),gv);
+  sq_o = pulse(f,duty) * ba.listInterp((0.0,0.0,0.0,1.0,1.0),gv);
+};
+
+
+//-------`(gac.phasor)`----------
+// Non-synchronizable Phasor (sawtooth) oscillator
+// for lookupi
+// #### Usage
+//
+// ```
+// phasor(freq) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Oscillator freq
+//
+// STATUS: unknown - may not be needed
+//----------------------------
+//phasor(freq,sync) = os.phasor(N,freq);
+
+//================================ Control Blocks ==============================
+//
+//-------`(gac.lookup)`----------
+// Programmable Lookup Table
+// #### Usage
+//
+// ```
+// lookup(size,init,widx,val,we,ridx,z) : _
+// ```
+//
+// Where:
+//
+// * `size`: table size (including dummy entry) known at compile time
+// * `init`: Lookup memory
+// * `widx`: Write index (0..N-1)
+// * `val`: Write value
+// * `we`: Write enable
+// * `ridx`: Read index (0..N-1)
+//
+// Note: table size is one greather than the global maximum; the Nth entry is
+// reserved for a dummy write index when 'we' is not asserted.
+//
+// type 'table' represents a (size,init) tuple
+// type 'table_pgm' represents a (widx,val,we) tuple
+//
+// ---
+// lookup:
+//   in:
+//     - table: table
+//     - pgm: table_pgm
+//     - idx: count
+//   out:
+//     - _: control
+// ...
+//----------------------------
+
+lookup(size,init,widx,val,we,ridx) = rwtable(size,init,w,val,r)
+with {
+    // read index
+    r = int(floor(ridx));
+    // write index
+    // Use size-1 for w when we is not asserted (dummy entry, never read)
+    // Use widx for w when we is asserted
+    w = select2(we,size-1,int(floor(widx)));
+};
+
+//-------`(gac.edge)`----------
+// Edge detector
+//
+// output 1 if the difference between successive samples is greater then delta
+//
+// #### Usage
+//
+// ```
+// edge(signal,delta) : _
+// ```
+//
+// Where:
+//
+// * `signal`: Input signal
+// * `delta`:
+//
+// ---
+// edge:
+//   in:
+//     - _: signal
+//     - delta: control
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+edge(signal,delta) = signal - signal' : (_ > delta);
+
+
+//-------`(gac.clock)`----------
+// Square wave clock
+//
+// #### Usage
+//
+// ```
+// clock(freq) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Clock freq
+//
+// ---
+// clock:
+//   in:
+//     - freq: freq
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+clock(f) = (os.lf_sawpos_reset(f,0) < 0.5);
+
+//-------`(gac.glock)`----------
+// Gated square wave clock
+//
+// #### Usage
+//
+// ```
+// glock(freq,gate,step) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Clock freq
+// * `gate`: Clock gate (1 enables, 0 steps)
+// * `step`: Clock step (1 steps clock when gate is 0)
+//
+// ---
+// glock:
+//   in:
+//     - freq: freq
+//     - gate: logic
+//     - step: button
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+glock(freq,gate,step) = select2(gate, step_clock, run_clock) with {
+    run_clock = (os.lf_sawpos_reset(freq,0) < 0.5);
+    step_clock = osh(1.0/freq, step);
+};
+
+//-------`(gac.index)`----------
+// Lookup indexer
+//
+// Output increases on rising edge of clock until index to len-1 is reached
+// where index returns to zero.
+// #### Usage
+//
+// ```
+// index(clk,len) : _
+// ```
+//
+// Where:
+//
+// * `clk`: Index clock
+// * `len`: Sequence length
+//
+// ---
+// index:
+//   in:
+//     - clk: logic
+//     - len: count
+//   out:
+//     - _: count
+// ...
+// STATUS: needs test
+//----------------------------
+
+index(clk,len) =
+    (+(edge(clk,0.5)) ~ \(count).(select2(count>=(len-1),count,0))) : int(_);
+
+//-------`(gac.osh)`----------
+// One-shot multivibrator
+//
+// #### Usage
+//
+// ```
+// oneshot(dur,gate) : _
+// ```
+//
+// Where:
+//
+// * `dur`: Duration in seconds
+// * `gate`: Input gate
+//
+// ---
+// osh:
+//   in:
+//     - dur: period
+//     - gate: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+osh(dur,gate) = ba.countdown(ba.sec2samp(dur), edge(gate,0.5)) : (_ != 0);
+
+//-------`(gac.ar)`----------
+// Attack/Release envelope
+//
+// #### Usage
+//
+// ```
+// ar(attack,release,gate) : _
+// ```
+//
+// Where:
+//
+// * `attack`: Attack time in didx while gate is high
+// * `release`: Release time in didx while gate is low
+// * `gate`: Input gate
+//
+// ---
+// ar:
+//   in:
+//     - attack: period
+//     - release: period
+//     - gate: logic
+//   out:
+//     - _: control
+// ...
+// STATUS: works
+//----------------------------
+ar(attack,release,gate) = en.are(attack,release,gate);
+
+
+//-------`(gac.output)`----------
+// Output block
+//
+// Only used indirectly as a block reference
+//
+// ---
+// output:
+//   in:
+//     - _: signal
+//     - vol: control
+// ...
+// STATUS: unknown
+//----------------------------
+output(vol) = vol*_;
+
