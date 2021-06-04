@@ -25,6 +25,9 @@ declare license "LGPL-2.1-or-later";
 // ...
 N = 256;
 
+// Filters hang system on 0 frequency
+FILT_MIN = 0.01;
+
 //================================= Audio Blocks ===============================
 //
 
@@ -104,7 +107,7 @@ amp(gain) = *(select2(gain<0,gain,0));
 // ...
 // STATUS: unknown
 //----------------------------
-bpf(freq,q,gain) = fi.resonbp(freq,q,gain);
+bpf(freq,q,gain) = fi.resonbp(max(freq,FILT_MIN),q,gain);
 
 //-------`(gac.hpf)`----------
 // Highpass filter
@@ -132,7 +135,7 @@ bpf(freq,q,gain) = fi.resonbp(freq,q,gain);
 // ...
 // STATUS: unknown
 //----------------------------
-hpf(freq,q,gain) = fi.resonhp(freq,q,gain);
+hpf(freq,q,gain) = fi.resonhp(max(freq,FILT_MIN),q,gain);
 
 //-------`(gac.lpf)`----------
 // Lowpass filter
@@ -160,7 +163,7 @@ hpf(freq,q,gain) = fi.resonhp(freq,q,gain);
 // ...
 // STATUS: unknown
 //----------------------------
-lpf(freq,q,gain) = fi.resonlp(freq,q,gain);
+lpf(freq,q,gain) = fi.resonlp(max(freq,FILT_MIN),q,gain);
 
 //-------`(gac.sin)`----------
 // Sine wave oscillator

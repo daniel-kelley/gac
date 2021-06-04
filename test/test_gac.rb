@@ -26,9 +26,25 @@ class TestU3S < Test::Unit::TestCase
   #
   def test_gac_002
     modules = GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
-    spec = { "blocks" => modules }
+    spec = { 'blocks' => modules }
     spec_path = 'test_gac_002.yml'
     dsp_path = 'test_gac_002.dsp'
+    file = File.new(spec_path, 'w')
+    file.write(spec.to_yaml)
+    file.close
+    status = system("../bin/panel #{spec_path} > #{dsp_path}")
+    assert(status)
+    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
+    assert(status)
+  end
+
+  #
+  # Generate a sine/output panel
+  #
+  def test_gac_003
+    spec = { 'blocks' => [ 'sine', 'output' ] }
+    spec_path = 'test_gac_003.yml'
+    dsp_path = 'test_gac_003.dsp'
     file = File.new(spec_path, 'w')
     file.write(spec.to_yaml)
     file.close
