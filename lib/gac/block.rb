@@ -96,22 +96,26 @@ class GAC::Block
         end
       end
 
-      #raise "#{name} no inputs for #{input_type}" if avail_output_in.length == 0
       if avail_output_in.length > 0
         @input[input_name] = avail_output_in
       end
     end
-    raise "#{name} no inputs at all " if avail_output_args.length == 0
-    @input_args << avail_output_args
+    if avail_output_args.length > 0
+      @input_args << avail_output_args
+    end
   end
 
   #
   # Construct a block function call
   #
   def fn_call
-    input_names = @input_args.flatten.map { |iarg| iarg.block.output_name }
-    input_args = input_names.join ','
-    name + "(#{input_args})"
+    args = ''
+    if @input_args.length > 0
+      input_names = @input_args.flatten.map { |iarg| iarg.block.output_name }
+      input_args = input_names.join ','
+      args = "(#{input_args})"
+    end
+    name + args
   end
 
   #
@@ -422,9 +426,15 @@ class GAC::Block
   #
   # Construct a faust control for a given GAC input type
   #
-  def construct_knob(label, typename)
+  def construct_knob(label, typename, allow_inversion=false)
     a = ["_DEFAULT","_MIN","_MAX","_STEP"].map do |s|
       typename.upcase + s
+    end
+
+    # if inversion is allowed, the the control min is the
+    # negative of the max
+    if allow_inversion
+      a[1] = "-#{a[2]}"
     end
 
     inp_knob = "#{knob}(\"#{wnum}#{label}\","
@@ -492,7 +502,6 @@ class GAC::Block
 
     if !@input[name].nil?
       @input[name].each do |iarg|
-        #raise "oops" if SUBTYPE[iarg.target] != type
         output = iarg.block.name
         inp_name = output + "_#{name}"
         target = iarg.target
@@ -501,7 +510,7 @@ class GAC::Block
         if iarg.target == 'count'
           target = 'control'
         end
-        inp_knob = construct_knob(output+'_'+name,target)
+        inp_knob = construct_knob(output+'_'+name,target,true)
         inp_cvt = "    #{inp_name}_cvt = " + iarg.block.convert_fn(type)
         s << inp_cvt+';'
         s << "    #{inp_name} ="
@@ -538,7 +547,8 @@ class GAC::Block
       raise 'oops' if iarg.target != "signal"
       output = iarg.block.name
       inp_name = output + "_#{arg}_in"
-      inp_knob = "#{knob}(\"#{wnum}#{output}_#{arg}\", 0,0,1,0.01)"
+      knob_name = output + "_#{arg}"
+      inp_knob = construct_knob(knob_name,iarg.target,true)
       s << "    #{inp_name} = #{iarg.block.output_name} * #{inp_knob};"
       inp << inp_name
     end

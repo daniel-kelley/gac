@@ -21,7 +21,7 @@ OUTPUT += tabgroup
 OUTPUT += p0
 STUFF := $(OUTPUT)
 
-all: $(OUTPUT)
+all: $(OUTPUT) test
 
 clock.c: clock.dsp ../lib/gac.lib
 	$(FAUST) $(FAUST_FLAGS) $< > $@ || rm -rf $@
