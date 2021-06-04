@@ -59,6 +59,9 @@ p0: p0.dsp
 p0.dsp: ../example/p0.yml
 	../bin/panel $< > $@
 
+test:
+	ruby test_gac.rb $(TEST_ARG)
+
 clean:
-	-rm -rf $(STUFF) *-svg faust.* p0.dsp
+	-rm -rf $(STUFF) *-svg faust.* p0.dsp test_gac_*
 

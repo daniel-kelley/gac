@@ -1,7 +1,6 @@
 #
 # GAC simple panel like test/seq_ui
 #
-# outputs: 1 FIXME REMOVE
 ---
 blocks:
   - lookup: freq
@@ -13,4 +12,3 @@ blocks:
   - osh
   - amp
   - output
-

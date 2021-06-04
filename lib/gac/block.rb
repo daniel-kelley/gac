@@ -344,11 +344,11 @@ class GAC::Block
       elsif !output_type_name?(input_type)
         # skip - no outputs will ever correspond to this input
       else
-        yield input_name, input_type, (@block + '_' + input_name)
+        yield input_name, input_type, input_name
       end
     end
     if !partial_input.nil?
-      yield partial_input[0], partial_input[1], (@block + '_input')
+      yield partial_input[0], partial_input[1], 'input'
     end
   end
 
@@ -451,6 +451,13 @@ class GAC::Block
   end
 
   #
+  # Construct a faust control for GAC Q input type
+  #
+  def construct_input_Q(name, type, arg)
+    construct_input_control(name, type, arg)
+  end
+
+  #
   # Construct a faust control for GAC logic input type
   #
   def construct_input_logic(name, type, arg)
@@ -461,7 +468,7 @@ class GAC::Block
     s << "        checkbox(\"#{wnum}enable\");"
     @input[name].each do |iarg|
       raise 'oops' if SUBTYPE[iarg.target] != "logic"
-      output = iarg.block.name # was output_name
+      output = iarg.block.name
       inp_name = output + "_#{name}_in"
       inp_knob = "checkbox(\"#{wnum}#{output}\")"
       s << "    #{inp_name} ="
@@ -486,7 +493,7 @@ class GAC::Block
     if !@input[name].nil?
       @input[name].each do |iarg|
         #raise "oops" if SUBTYPE[iarg.target] != type
-        output = iarg.block.name # was output_name
+        output = iarg.block.name
         inp_name = output + "_#{name}"
         target = iarg.target
         # special case for 'count' gain knobs to use 'control' range
@@ -494,7 +501,7 @@ class GAC::Block
         if iarg.target == 'count'
           target = 'control'
         end
-        inp_knob = construct_knob(output+'_'+name+"_scale",target)
+        inp_knob = construct_knob(output+'_'+name,target)
         inp_cvt = "    #{inp_name}_cvt = " + iarg.block.convert_fn(type)
         s << inp_cvt+';'
         s << "    #{inp_name} ="
@@ -529,9 +536,9 @@ class GAC::Block
     inp = []
     @input[name].each do |iarg|
       raise 'oops' if iarg.target != "signal"
-      output = iarg.block.name # was output_name
-      inp_name = output + "_in"
-      inp_knob = "#{knob}(\"#{wnum}#{output}\", 0,0,1,0.01)"
+      output = iarg.block.name
+      inp_name = output + "_#{arg}_in"
+      inp_knob = "#{knob}(\"#{wnum}#{output}_#{arg}\", 0,0,1,0.01)"
       s << "    #{inp_name} = #{iarg.block.output_name} * #{inp_knob};"
       inp << inp_name
     end
