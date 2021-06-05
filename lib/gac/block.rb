@@ -203,7 +203,10 @@ class GAC::Block
   # Return all the types compatible with typename including itself
   #
   def compatible_types(typename)
-    [typename] + @subtype_inv[SUBTYPE[typename]]
+    a = [typename] + @subtype_inv[SUBTYPE[typename]]
+    # special case: freq allows signal for frequency modulation
+    a << 'signal' if typename == 'freq'
+    a
   end
 
   #
