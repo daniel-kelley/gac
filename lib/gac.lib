@@ -566,3 +566,30 @@ with {
 	random = +(C) ~ *(1103515245) & mask; // "linear congruential"
 	RANDMAX	= 2147483647.0; // = 2^31-1 = MAX_SIGNED_INT in 32 bits
 };
+
+//-------`(gac.notch)`----------
+// Notch filter
+// #### Usage
+//
+// ```
+// _ : notch(freq,q,gain) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Notch center [freq]
+// * `width`: Notch width [freq]
+//
+// ---
+// notch:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - width: freq
+//   out:
+//     - _: signal
+// ...
+// STATUS: unknown
+//----------------------------
+notch(freq,width) = fi.notchw(freq,width);
+
