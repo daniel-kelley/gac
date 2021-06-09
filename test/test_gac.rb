@@ -54,4 +54,20 @@ class TestU3S < Test::Unit::TestCase
     assert(status)
   end
 
+  #
+  # Generate a noise/noise/output panel
+  #
+  def test_gac_004
+    spec = { 'blocks' => [ 'noise', 'noise', 'output' ] }
+    spec_path = 'test_gac_004.yml'
+    dsp_path = 'test_gac_004.dsp'
+    file = File.new(spec_path, 'w')
+    file.write(spec.to_yaml)
+    file.close
+    status = system("../bin/panel #{spec_path} > #{dsp_path}")
+    assert(status)
+    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
+    assert(status)
+  end
+
 end
