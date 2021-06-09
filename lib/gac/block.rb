@@ -10,6 +10,9 @@ class GAC::Block
   @instance_num = {} # indexed by :block, value is 1-based block instance
   @wave_num = 0
 
+  LCG_INCR_VAL = 12345
+  @lcg_incr_val = LCG_INCR_VAL
+
   GAC_N16 = 16
   SUBTYPE = {
     "signal" => "signal",
@@ -43,6 +46,7 @@ class GAC::Block
   #
   def initialize(block_spec, knob="hslider")
     @knob = knob
+    @lcg_incr = false
     @table = false
     @table_pgm = false
     @modifier = nil
@@ -68,7 +72,11 @@ class GAC::Block
     # array in InputArgs in input order
     @input_args = []
     # convenience in args by name
-    @in = data_to_hash('in')
+    if !@data['in'].nil?
+      @in = data_to_hash('in')
+    else
+      @in = nil
+    end
     @subtype_inv = invert_subtype
     @widget_idx = 0
   end
@@ -262,6 +270,7 @@ class GAC::Block
   # Iterate across block inputs, yielding the input name and type
   #
   def each_input
+    return if @data['in'].nil? # no inputs
     @data['in'].each do |input|
       raise 'oops' if input.keys.length != 1
       raise 'oops' if input.values.length != 1
@@ -299,6 +308,9 @@ class GAC::Block
       yield :table_pgm_val, nil, nil, (@block + '_pgm_val')
       yield :table_pgm_we, nil, nil, (@block + '_pgm_we')
     end
+    if @lcg_incr
+      yield :lcg_incr, nil, nil,  (@block + '_lcg_incr')
+    end
     scan_inputs_iter do  |input_name,input_type,input_var|
       yield :input, input_name, input_type, input_var
     end
@@ -310,19 +322,27 @@ class GAC::Block
   def gac_call
     s = []
 
-    args = ['(']
+    seq = ''
+    args = []
     if @table
-      args << @block + '_table,'
+      args << @block + '_table'
     end
     if @table_pgm
-      args << @block + '_pgm_idx,'
-      args << @block + '_pgm_val,'
-      args << @block + '_pgm_we,'
+      args << @block + '_pgm_idx'
+      args << @block + '_pgm_val'
+      args << @block + '_pgm_we'
     end
-    args << scan_inputs.join(',')
-    args << ')'
-    s << args
-    s << " : gac." + @block
+    if @lcg_incr
+      args << @block + '_lcg_incr'
+    end
+    if !@in.nil? || args.length > 0
+      s << '('
+      s << (args+scan_inputs).join(',')
+      s << ')'
+      # makes diff to prev generated output easier
+      seq = ': '
+    end
+    s << " #{seq}gac." + @block
     if @table_pgm
       s << table_pgm_reader
     end
@@ -413,6 +433,15 @@ class GAC::Block
     s << "               #{context}_MIN,"
     s << "               #{context}_MAX,"
     s << "               #{context}_STEP);"
+    s
+  end
+
+  #
+  # Construct a faust control for a GAC table program write enable argument
+  #
+  def construct_lcg_incr(arg)
+    s = []
+    s << "    #{arg} = #{self.class.lcg_incr};"
     s
   end
 
@@ -563,6 +592,7 @@ class GAC::Block
   # Construct the GAC call environment
   #
   def fn_with
+    needs_with = false
     s = []
     s << "with {"
     gac_args do |arg_type, input_name, input_type, arg_name|
@@ -572,10 +602,11 @@ class GAC::Block
         s << method("construct_"+arg_type.to_s+"_"+input_type).call(
                     input_name, input_type, arg_name)
       end
+      needs_with = true
     end
     s << "};"
     s << ""
-    s
+    needs_with ? s : [";"]
   end
 
   #
@@ -612,6 +643,9 @@ class GAC::Block
       when 'table_pgm'
         raise "Only one #{input_type} allowed per block" if @table_pgm
         @table_pgm = true
+      when 'lcg_incr'
+        raise "Only one #{input_type} allowed per block" if @lcg_incr
+        @lcg_incr = true
       end
     end
   end
@@ -643,6 +677,17 @@ class GAC::Block
       num = @wave_num
       @wave_num += 1
       num
+    end
+
+    #
+    # Return an increment value for a linear congruential generator
+    # noise source. The intention is to have a unique increment for
+    # each distinct noise source.
+    #
+    def lcg_incr
+      val = @lcg_incr_val
+      @lcg_incr_val += (LCG_INCR_VAL+1)
+      val
     end
 
   end

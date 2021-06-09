@@ -38,16 +38,9 @@ class GAC::Panel
   # Analyze panel configuration
   #
   def analyze_panel(panel)
-    #RM outputs = panel['outputs']
-    #RM inputs = panel['inputs']
-    #RM @outputs = outputs.nil? ? 0 : Integer(outputs)
-    #RM @inputs = inputs.nil? ? 0 : Integer(inputs)
-    #RM raise "no IO?" if @inputs == 0 && @outputs == 0
     blocks = panel['blocks']
     raise "missing blocks" if blocks.nil?
     blocks.each { |block| analyze_block(block) }
-    #RM raise "needs support" if @inputs != 0
-
   end
 
   #
@@ -71,9 +64,6 @@ class GAC::Panel
       end
       @output[block.output_type] << block
     end
-    #RM @outputs.times do |n|
-    #RM   @output_names << "output#{n+1}_out"
-    #RM end
   end
 
   #
@@ -198,7 +188,6 @@ EOS
     s << "output("
     s << @output_names.join(",\n")
     s << ") = ("
-    #RM @outputs.times { |n| s << "output#{n+1}_out" }
     s << @output_names.reject {|n| n !~ /^output/ }.join(",\n")
     s << ");"
     s << "process = (panel ~ copy) : output;"
@@ -213,7 +202,6 @@ EOS
     s << panel_header(desc)
     s << panel_input(panel)
     s << panel_blocks
-    # s << panel_output
     s << panel_process
     s.flatten.join("\n")
   end
