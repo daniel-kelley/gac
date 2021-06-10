@@ -34,9 +34,11 @@
 
 /* GAC test driver derived from faust/architecture/minimal.c */
 
+#define _GNU_SOURCE
 #include <math.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fenv.h>
 
 #include "faust/gui/CInterface.h"
 
@@ -68,15 +70,17 @@
 
 static UIGlue ui;
 
-static double drand_range(double dmin, double dmax)
+static float rand_range(float dmin, float dmax)
 {
-    double delta = dmax - dmin;
-    return dmin + (drand48() * delta);
+    float delta = dmax - dmin;
+    float fval = dmin + ((float)drand48() * delta);
+    return fval;
 }
 
-static double drand_bool(void)
+static float rand_bool(void)
 {
-    return (drand48() < 0.5);
+    float fval =((float)drand48() < 0.5f);
+    return fval;
 }
 
 static void test_openTabBox(void* ui_interface, const char* label)
@@ -97,37 +101,37 @@ static void test_closeBox(void* ui_interface)
 
 static void test_addButton(void* ui_interface, const char* label, FAUSTFLOAT* zone)
 {
-    *zone = drand_bool();
+    *zone = rand_bool();
 }
 
 static void test_addCheckButton(void* ui_interface, const char* label, FAUSTFLOAT* zone)
 {
-    *zone = drand_bool();
+    *zone = rand_bool();
 }
 
 static void test_addVerticalSlider(void* ui_interface, const char* label, FAUSTFLOAT* zone, FAUSTFLOAT init, FAUSTFLOAT min, FAUSTFLOAT max, FAUSTFLOAT step)
 {
-    *zone = drand_range(min,max);
+    *zone = rand_range(min,max);
 }
 
 static void test_addHorizontalSlider(void* ui_interface, const char* label, FAUSTFLOAT* zone, FAUSTFLOAT init, FAUSTFLOAT min, FAUSTFLOAT max, FAUSTFLOAT step)
 {
-    *zone = drand_range(min,max);
+    *zone = rand_range(min,max);
 }
 
 static void test_addNumEntry(void* ui_interface, const char* label, FAUSTFLOAT* zone, FAUSTFLOAT init, FAUSTFLOAT min, FAUSTFLOAT max, FAUSTFLOAT step)
 {
-    *zone = drand_range(min,max);
+    *zone = rand_range(min,max);
 }
 
 static void test_addHorizontalBargraph(void* ui_interface, const char* label, FAUSTFLOAT* zone, FAUSTFLOAT min, FAUSTFLOAT max)
 {
-    *zone = drand_range(min,max);
+    *zone = rand_range(min,max);
 }
 
 static void test_addVerticalBargraph(void* ui_interface, const char* label, FAUSTFLOAT* zone, FAUSTFLOAT min, FAUSTFLOAT max)
 {
-    *zone = drand_range(min,max);
+    *zone = rand_range(min,max);
 }
 
 static void test_addSoundfile(void* ui_interface, const char* label, const char* url, struct Soundfile** sf_zone)
@@ -156,6 +160,11 @@ static void init_ui(UIGlue *ui)
     ui->declare = test_declare;
 }
 
+/* Breakpointable place */
+void wait(void)
+{
+}
+
 int main(int argc, char* argv[])
 {
     mydsp* dsp = newmydsp();
@@ -164,10 +173,14 @@ int main(int argc, char* argv[])
     int c;
     unsigned long seed = rand();
     unsigned long count = 1000;
-    while ((c = getopt(argc, argv, "n:s:")) != EOF) {
+    unsigned long wait_count = 0;
+    while ((c = getopt(argc, argv, "n:s:w:")) != EOF) {
         switch (c) {
         case 'n':
             count = strtoul(optarg,0,0);
+            break;
+        case 'w':
+            wait_count = strtoul(optarg,0,0);
             break;
         case 's':
             seed = strtoul(optarg,0,0);
@@ -191,10 +204,15 @@ int main(int argc, char* argv[])
     for (int chan = 0; chan < num_outputs; ++chan) {
         outputs[chan] = malloc(sizeof(FAUSTFLOAT) * BUFFER_SIZE);
     }
+    feenableexcept(FE_DIVBYZERO | FE_INVALID |FE_OVERFLOW);
     // Compute a buffer
     while (count--) {
+        if (count == wait_count) {
+            wait();
+        }
         buildUserInterfacemydsp(dsp, &ui);
         computemydsp(dsp, BUFFER_SIZE, inputs, outputs);
+        feclearexcept(FE_ALL_EXCEPT);
     }
     for (int chan = 0; chan < num_inputs; ++chan) {
         free(inputs[chan]);
@@ -203,6 +221,8 @@ int main(int argc, char* argv[])
         free(outputs[chan]);
     }
     deletemydsp(dsp);
+
+    return 0;
 }
 
 /********************END ARCHITECTURE SECTION (part 2/2)****************/
