@@ -563,7 +563,7 @@ class GAC::Block
       end
     end
     sigma_var = name + '_sigma'
-    s << "#{sigma_var} = " + inp.join("\n        + ") + ";"
+    s << "    #{sigma_var} = " + inp.join("\n        + ") + ";"
     s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
     s
   end
@@ -600,7 +600,7 @@ class GAC::Block
       end
     end
     sigma_var = arg + '_sigma'
-    s << "#{sigma_var} = " + inp.join("\n        + ") + ";"
+    s << "    #{sigma_var} = " + inp.join("\n        + ") + ";"
     s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
     s
   end
