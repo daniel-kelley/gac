@@ -293,15 +293,13 @@ pulse(f,w) = os.pulsetrain(f,w);
 // STATUS: works
 //----------------------------
 
-osc(f,s) = output with {
+osc(f,s) = sin_o+tri_o+saw_o+sq_o with {
   gv = s * 4.0;
   duty =                 ba.listInterp((0.5,0.5,0.5,0.5,1.0),gv);
   sin_o = sine(f)      * ba.listInterp((1.0,0.0,0.0,0.0,0.0),gv);
   tri_o = tri(f)       * ba.listInterp((0.0,1.0,0.0,0.0,0.0),gv);
   saw_o = saw(f)       * ba.listInterp((0.0,0.0,1.0,0.0,0.0),gv);
   sq_o = pulse(f,duty) * ba.listInterp((0.0,0.0,0.0,1.0,1.0),gv);
-  sigma = 0.0;//sin_o+tri_o+saw_o+sq_o;
-  output = sigma;
 };
 
 
