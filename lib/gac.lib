@@ -27,6 +27,15 @@ N = 256;
 
 // Filters hang system on 0 frequency
 FILT_MIN = 0.01;
+FILT_MAX = 10000.0;
+
+Q_MIN = 1.0;
+Q_MAX = 10.0;
+
+//=================================== Internal =================================
+
+// clamp val to (min..max)
+clamp(minval, maxval, val) = select2(val>maxval,select2(val<minval,val,minval),maxval);
 
 //================================= Audio Blocks ===============================
 //
@@ -79,7 +88,7 @@ mult(mod) = *(mod);
 // ...
 // STATUS: unknown
 //----------------------------
-amp(gain) = *(select2(gain<0,gain,0));
+amp(gain) = *(clamp(0.0, 1.0, gain));
 
 //-------`(gac.bpf)`----------
 // Bandpass filter
@@ -105,9 +114,9 @@ amp(gain) = *(select2(gain<0,gain,0));
 //   out:
 //     - _: signal
 // ...
-// STATUS: unknown
+// STATUS: broken
 //----------------------------
-bpf(freq,q,gain) = fi.resonbp(max(freq,FILT_MIN),q,gain);
+bpf(freq,q,gain) = fi.resonbp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q),clamp(0.0,1.0,gain));
 
 //-------`(gac.hpf)`----------
 // Highpass filter
@@ -133,9 +142,9 @@ bpf(freq,q,gain) = fi.resonbp(max(freq,FILT_MIN),q,gain);
 //   out:
 //     - _: signal
 // ...
-// STATUS: unknown
+// STATUS: broken
 //----------------------------
-hpf(freq,q,gain) = fi.resonhp(max(freq,FILT_MIN),q,gain);
+hpf(freq,q,gain) = fi.resonhp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q),clamp(0.0,1.0,gain));
 
 //-------`(gac.lpf)`----------
 // Lowpass filter
@@ -161,9 +170,9 @@ hpf(freq,q,gain) = fi.resonhp(max(freq,FILT_MIN),q,gain);
 //   out:
 //     - _: signal
 // ...
-// STATUS: unknown
+// STATUS: broken
 //----------------------------
-lpf(freq,q,gain) = fi.resonlp(max(freq,FILT_MIN),q,gain);
+lpf(freq,q,gain) = fi.resonlp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q),clamp(0.0,1.0,gain));
 
 //-------`(gac.sin)`----------
 // Sine wave oscillator
@@ -284,13 +293,15 @@ pulse(f,w) = os.pulsetrain(f,w);
 // STATUS: works
 //----------------------------
 
-osc(f,s) = (sin_o+tri_o+saw_o+sq_o) with {
+osc(f,s) = output with {
   gv = s * 4.0;
   duty =                 ba.listInterp((0.5,0.5,0.5,0.5,1.0),gv);
   sin_o = sine(f)      * ba.listInterp((1.0,0.0,0.0,0.0,0.0),gv);
   tri_o = tri(f)       * ba.listInterp((0.0,1.0,0.0,0.0,0.0),gv);
   saw_o = saw(f)       * ba.listInterp((0.0,0.0,1.0,0.0,0.0),gv);
   sq_o = pulse(f,duty) * ba.listInterp((0.0,0.0,0.0,1.0,1.0),gv);
+  sigma = 0.0;//sin_o+tri_o+saw_o+sq_o;
+  output = sigma;
 };
 
 
@@ -560,9 +571,11 @@ output(vol) = vol*_;
 // STATUS: unknown
 // This is faust no.noise with increment parameterized.
 //----------------------------
-noise(C) = random / RANDMAX
+noise(C) = output
 with {
 	mask = 4294967295; // 2^32-1
 	random = +(C) ~ *(1103515245) & mask; // "linear congruential"
 	RANDMAX	= 2147483647.0; // = 2^31-1 = MAX_SIGNED_INT in 32 bits
+        out0 = random / RANDMAX;
+        output = out0;
 };

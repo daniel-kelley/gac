@@ -27,14 +27,21 @@ class TestU3S < Test::Unit::TestCase
   def test_gac_002
     modules = GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
     spec = { 'blocks' => modules }
-    spec_path = 'test_gac_002.yml'
-    dsp_path = 'test_gac_002.dsp'
+    name = 'test_gac_002'
+    spec_path = name + '.yml'
+    dsp_path = name + '.dsp'
     file = File.new(spec_path, 'w')
     file.write(spec.to_yaml)
     file.close
     status = system("../bin/panel #{spec_path} > #{dsp_path}")
     assert(status)
     status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
+    assert(status)
+    status = system("faust -lang c -I ../lib/ -a faust/architecture/testdvr.c #{dsp_path} > #{name}_driver.c")
+    assert(status)
+    status = system("make #{name}_driver")
+    assert(status)
+    status = system("./#{name}_driver -n 1000000")
     assert(status)
   end
 

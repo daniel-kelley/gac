@@ -392,6 +392,15 @@ class GAC::Block
   end
 
   #
+  # Return a clamp function on var for a given type
+  #
+  def clampfn(type,var)
+    utype = type.upcase
+    "gac.clamp((-#{utype}_MAX),#{utype}_MAX,#{var})"
+  end
+
+
+  #
   # Construct a faust waveform for a GAC table argument
   #
   def construct_table(arg)
@@ -508,15 +517,17 @@ class GAC::Block
     inp << "enable_"+name
     s << "    #{inp[0]} ="
     s << "        checkbox(\"#{wnum}enable\");"
-    @input[name].each do |iarg|
-      raise 'oops' if SUBTYPE[iarg.target] != "logic"
-      output = iarg.block.name
-      inp_name = output + "_#{name}_in"
-      inp_knob = "checkbox(\"#{wnum}#{output}\")"
-      s << "    #{inp_name} ="
-      s << "        #{iarg.block.output_name}"
-      s << "        & #{inp_knob};"
-      inp << inp_name
+    if !@input[name].nil?
+      @input[name].each do |iarg|
+        raise 'oops' if SUBTYPE[iarg.target] != "logic"
+        output = iarg.block.name
+        inp_name = output + "_#{name}_in"
+        inp_knob = "checkbox(\"#{wnum}#{output}\")"
+        s << "    #{inp_name} ="
+        s << "        #{iarg.block.output_name}"
+        s << "        & #{inp_knob};"
+        inp << inp_name
+      end
     end
     s << "    " + arg + "\n        =" + inp.join("\n        |") + ";"
     s
@@ -551,7 +562,9 @@ class GAC::Block
         inp << inp_name
       end
     end
-    s << "    " + arg + " = " + inp.join("\n        + ") + ";"
+    sigma_var = name + '_sigma'
+    s << "#{sigma_var} = " + inp.join("\n        + ") + ";"
+    s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
     s
   end
 
@@ -575,16 +588,20 @@ class GAC::Block
   def construct_input_signal(name, type, arg)
     s = []
     inp = []
-    @input[name].each do |iarg|
-      raise 'oops' if iarg.target != "signal"
-      output = iarg.block.name
-      inp_name = output + "_#{arg}_in"
-      knob_name = output + "_#{arg}"
-      inp_knob = construct_knob(knob_name,iarg.target,true)
-      s << "    #{inp_name} = #{iarg.block.output_name} * #{inp_knob};"
-      inp << inp_name
+    if !@input[name].nil?
+      @input[name].each do |iarg|
+        raise 'oops' if iarg.target != "signal"
+        output = iarg.block.name
+        inp_name = output + "_#{arg}_in"
+        knob_name = output + "_#{arg}"
+        inp_knob = construct_knob(knob_name,iarg.target,true)
+        s << "    #{inp_name} = #{iarg.block.output_name} * #{inp_knob};"
+        inp << inp_name
+      end
     end
-    s << "    " + arg + " = " + inp.join("\n        + ") + ";"
+    sigma_var = arg + '_sigma'
+    s << "#{sigma_var} = " + inp.join("\n        + ") + ";"
+    s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
     s
   end
 

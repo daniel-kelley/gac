@@ -87,9 +87,10 @@ CONTROL_STEP = 0.01;
 CONTROL_DEFAULT = CONTROL_MIN;
 control2control(n) = n;
 
-FREQ_MIN = 0.0;
-FREQ_MAX = 20000.0;
+// FREQ 0 may result in division by zero
 FREQ_STEP = 0.01;
+FREQ_MIN = FREQ_STEP;
+FREQ_MAX = 20000.0;
 FREQ_DEFAULT = FREQ_MIN;
 freq2control(n) = n/FREQ_MAX;
 control2freq(n) = n*FREQ_MAX;
