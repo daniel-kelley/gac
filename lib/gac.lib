@@ -700,3 +700,78 @@ acc = fi.dcblocker;
 // STATUS: works
 //----------------------------
 adsr(attack,decay,sustain,release,gate) = en.adsr(attack,decay,sustain,release,gate);
+
+//-------`(gac.sh)`----------
+// Signal Sample and Hold
+//
+// #### Usage
+//
+// ```
+// sh(gate) : _
+// ```
+//
+// Where:
+//
+// * `gate`: Input gate
+//
+// ---
+// sh:
+//   in:
+//     - _: signal
+//     - gate: logic
+//   out:
+//     - _: control
+// ...
+// STATUS: works
+//----------------------------
+sh(gate) = ba.latch(gate);
+
+//-------`(gac.sample)`----------
+// Control Sample and Hold
+//
+// #### Usage
+//
+// ```
+// sample(gate) : _
+// ```
+//
+// Where:
+//
+// * `gate`: Input gate
+//
+// ---
+// sample:
+//   in:
+//     - _: control
+//     - gate: logic
+//   out:
+//     - _: control
+// ...
+// STATUS: works
+//----------------------------
+sample(gate) = ba.latch(gate);
+
+//-------`(gac.latch)`----------
+// Logic latch
+//
+// #### Usage
+//
+// ```
+// latch(gate) : _
+// ```
+//
+// Where:
+//
+// * `gate`: Input gate
+//
+// ---
+// latch:
+//   in:
+//     - _: logic
+//     - gate: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+latch(gate) = ba.latch(gate);

@@ -361,9 +361,6 @@ class GAC::Block
       # partial_inputs have to be added last
       #
       if input_name == '_'
-        if input_type != 'signal'
-          raise "#{name}: non-signal partial application not allowed"
-        end
         if !partial_input.nil?
           raise "#{name}: only one partial application allowed"
         end
@@ -514,15 +511,16 @@ class GAC::Block
   def construct_input_logic(name, type, arg)
     s = []
     inp = []
-    inp << "enable_"+name
+    vname = varname(name)
+    inp << "enable_"+vname
     s << "    #{inp[0]} ="
-    s << "        checkbox(\"#{wnum}enable\");"
+    s << "        checkbox(\"#{wnum}#{vname}_enable\");"
     if !@input[name].nil?
       @input[name].each do |iarg|
         raise 'oops' if SUBTYPE[iarg.target] != "logic"
         output = iarg.block.name
-        inp_name = output + "_#{name}_in"
-        inp_knob = "checkbox(\"#{wnum}#{output}\")"
+        inp_name = output + "_#{vname}_in"
+        inp_knob = "checkbox(\"#{wnum}#{vname}_#{output}\")"
         s << "    #{inp_name} ="
         s << "        #{iarg.block.output_name}"
         s << "        & #{inp_knob};"
@@ -534,26 +532,36 @@ class GAC::Block
   end
 
   #
+  # Construct (part of) a variable name fromthe given name.
+  #
+  # Ensure that name '_' is expanded to a valid faust ident
+  #
+  def varname(name)
+    (name == '_') ? 'input' : name;
+  end
+
+  #
   # Construct a faust control for GAC control input type
   #
   def construct_input_control(name, type, arg)
     s = []
     inp = []
-    inp << "#{name}_knob"
+    vname = varname(name)
+    inp << "#{vname}_knob"
     s << "    #{inp[0]} ="
-    s << "        " + construct_knob(name,type)+";"
+    s << "        " + construct_knob(vname,type)+";"
 
     if !@input[name].nil?
       @input[name].each do |iarg|
         output = iarg.block.name
-        inp_name = output + "_#{name}"
+        inp_name = output + "_#{vname}"
         target = iarg.target
         # special case for 'count' gain knobs to use 'control' range
         # otherwise the result would be nonsensical "count*count"
         if iarg.target == 'count'
           target = 'control'
         end
-        inp_knob = construct_knob(output+'_'+name,target,true)
+        inp_knob = construct_knob(output+'_'+vname,target,true)
         inp_cvt = "    #{inp_name}_cvt = " + iarg.block.convert_fn(type)
         s << inp_cvt+';'
         s << "    #{inp_name} ="
@@ -562,7 +570,7 @@ class GAC::Block
         inp << inp_name
       end
     end
-    sigma_var = name + '_sigma'
+    sigma_var = vname + '_sigma'
     s << "    #{sigma_var} = " + inp.join("\n        + ") + ";"
     s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
     s
