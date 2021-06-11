@@ -775,3 +775,30 @@ sample(gate) = ba.latch(gate);
 // STATUS: works
 //----------------------------
 latch(gate) = ba.latch(gate);
+
+//-------`(gac.env)`----------
+// Envelope Follower
+//
+// #### Usage
+//
+// ```
+// env(attack, release) : _
+// ```
+//
+// Where:
+//
+// * `attack`: Attack time in seconds
+// * `release`: Release time in seconds
+//
+// ---
+// env:
+//   in:
+//     - _: signal
+//     - attack: period
+//     - release: period
+//   out:
+//     - _: control
+// ...
+// STATUS: works
+//----------------------------
+env(attack,release) = an.amp_follower_ar(attack,release);
