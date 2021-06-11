@@ -625,7 +625,7 @@ notch(freq,q) = fi.svf.notch(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q))
 peak(freq,q) = fi.svf.peak(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.ap)`----------
-// AP filter
+// All Pass filter
 // #### Usage
 //
 // ```
@@ -649,3 +649,22 @@ peak(freq,q) = fi.svf.peak(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 // STATUS: works
 //----------------------------
 ap(freq,q) = fi.svf.ap(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
+
+//-------`(gac.acc)`----------
+// AC Capacitor aka DC Blocker
+// #### Usage
+//
+// ```
+// _ : acc : _
+// ```
+//
+// ---
+// acc:
+//   in:
+//     - _: signal
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+acc = fi.dcblocker;
