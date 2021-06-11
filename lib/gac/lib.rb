@@ -49,7 +49,11 @@ class GAC::LibReader
         arg = $1
         if arg[0] == '.' # really ...
           begin
-            h.merge!(YAML::load(y))
+            block = YAML::load(y)
+            k = block.keys
+            raise "#{block.inspect} misformatted" if k.length != 1
+            raise "duplicate key #{k[0]}" if !h[k[0]].nil?
+            h.merge!(block)
           rescue
             pp(y)
             raise "#{$!}"

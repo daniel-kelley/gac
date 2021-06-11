@@ -126,7 +126,7 @@ bpf(freq,q) = fi.svf.bp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 //
 // Where:
 //
-// * `freq`: Bandpass center [freq]
+// * `freq`: Corner frequency [freq]
 // * `q`:    Filter [Q]
 //
 // ---
@@ -152,7 +152,7 @@ hpf(freq,q) = fi.svf.hp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 //
 // Where:
 //
-// * `freq`: Bandpass center [freq]
+// * `freq`: Corner frequency [freq]
 // * `q`:    Filter [Q]
 //
 // ---
@@ -571,3 +571,81 @@ with {
         out0 = random / RANDMAX;
         output = out0;
 };
+
+//-------`(gac.notch)`----------
+// Notch filter
+// #### Usage
+//
+// ```
+// _ : notch(freq,q) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Center frequency [freq]
+// * `q`:    Filter Q [Q]
+//
+// ---
+// notch:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - q: Q
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+notch(freq,q) = fi.svf.notch(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
+
+//-------`(gac.peak)`----------
+// Peak filter
+// #### Usage
+//
+// ```
+// _ : peak(freq,q) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Center frequency [freq]
+// * `q`:    Filter Q [Q]
+//
+// ---
+// peak:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - q: Q
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+peak(freq,q) = fi.svf.peak(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
+
+//-------`(gac.ap)`----------
+// AP filter
+// #### Usage
+//
+// ```
+// _ : ap(freq,q) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Center frequency [freq]
+// * `q`:    Filter Q [Q]
+//
+// ---
+// ap:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - q: Q
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+ap(freq,q) = fi.svf.ap(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
