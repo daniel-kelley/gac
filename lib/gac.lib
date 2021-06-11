@@ -827,3 +827,159 @@ env(attack,release) = an.amp_follower_ar(attack,release);
 // STATUS: works
 //----------------------------
 comp(level) = _>level;
+
+//-------`(gac.and)`----------
+// AND Gate
+//
+// #### Usage
+//
+// ```
+// and(a,b) : _
+// ```
+//
+// Where:
+//
+// * `a`: Input A
+// * `b`: Input B
+//
+// ---
+// and:
+//   in:
+//     - a: logic
+//     - b: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+and(a,b) = a&b == 1;
+
+//-------`(gac.or)`----------
+// OR Gate
+//
+// #### Usage
+//
+// ```
+// or(a,b) : _
+// ```
+//
+// Where:
+//
+// * `a`: Input A
+// * `b`: Input B
+//
+// ---
+// or:
+//   in:
+//     - a: logic
+//     - b: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+or(a,b) = a|b == 1;
+
+//-------`(gac.xr)`----------
+// XOR Gate
+//
+// #### Usage
+//
+// ```
+// xor(a,b) : _
+// ```
+//
+// Where:
+//
+// * `a`: Input A
+// * `b`: Input B
+//
+// ---
+// xr:
+//   in:
+//     - a: logic
+//     - b: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+xr(a,b) = xor(a,b) == 1;
+
+//-------`(gac.nand)`----------
+// NAND Gate
+//
+// #### Usage
+//
+// ```
+// nand(a,b) : _
+// ```
+//
+// Where:
+//
+// * `a`: Input A
+// * `b`: Input B
+//
+// ---
+// nand:
+//   in:
+//     - a: logic
+//     - b: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+nand(a,b) = a&b == 0;
+
+//-------`(gac.nor)`----------
+// OR Gate
+//
+// #### Usage
+//
+// ```
+// nor(a,b) : _
+// ```
+//
+// Where:
+//
+// * `a`: Input A
+// * `b`: Input B
+//
+// ---
+// nor:
+//   in:
+//     - a: logic
+//     - b: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+nor(a,b) = a|b == 0;
+
+//-------`(gac.xnr)`----------
+// XNOR Gate
+//
+// #### Usage
+//
+// ```
+// xnr(a,b) : _
+// ```
+//
+// Where:
+//
+// * `a`: Input A
+// * `b`: Input B
+//
+// ---
+// xnr:
+//   in:
+//     - a: logic
+//     - b: logic
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+xnr(a,b) = xor(a,b) == 0;
