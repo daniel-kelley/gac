@@ -27,6 +27,15 @@ N = 256;
 
 // Filters hang system on 0 frequency
 FILT_MIN = 0.01;
+FILT_MAX = 10000.0;
+
+Q_MIN = 1.0;
+Q_MAX = 10.0;
+
+//=================================== Internal =================================
+
+// clamp val to (min..max)
+clamp(minval, maxval, val) = select2(val>maxval,select2(val<minval,val,minval),maxval);
 
 //================================= Audio Blocks ===============================
 //
@@ -79,7 +88,7 @@ mult(mod) = *(mod);
 // ...
 // STATUS: unknown
 //----------------------------
-amp(gain) = *(select2(gain<0,gain,0));
+amp(gain) = *(clamp(0.0, 1.0, gain));
 
 //-------`(gac.bpf)`----------
 // Bandpass filter
@@ -93,7 +102,6 @@ amp(gain) = *(select2(gain<0,gain,0));
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
-// * `gain`: Gain [control]
 //
 // ---
 // bpf:
@@ -101,13 +109,12 @@ amp(gain) = *(select2(gain<0,gain,0));
 //     - _: signal
 //     - freq: freq
 //     - q: Q
-//     - gain: control
 //   out:
 //     - _: signal
 // ...
-// STATUS: unknown
+// STATUS: works
 //----------------------------
-bpf(freq,q,gain) = fi.resonbp(max(freq,FILT_MIN),q,gain);
+bpf(freq,q) = fi.svf.bp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.hpf)`----------
 // Highpass filter
@@ -121,7 +128,6 @@ bpf(freq,q,gain) = fi.resonbp(max(freq,FILT_MIN),q,gain);
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
-// * `gain`: Gain [control]
 //
 // ---
 // hpf:
@@ -129,13 +135,12 @@ bpf(freq,q,gain) = fi.resonbp(max(freq,FILT_MIN),q,gain);
 //     - _: signal
 //     - freq: freq
 //     - q: Q
-//     - gain: control
 //   out:
 //     - _: signal
 // ...
-// STATUS: unknown
+// STATUS: works
 //----------------------------
-hpf(freq,q,gain) = fi.resonhp(max(freq,FILT_MIN),q,gain);
+hpf(freq,q) = fi.svf.hp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.lpf)`----------
 // Lowpass filter
@@ -149,7 +154,6 @@ hpf(freq,q,gain) = fi.resonhp(max(freq,FILT_MIN),q,gain);
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
-// * `gain`: Gain [control]
 //
 // ---
 // lpf:
@@ -157,13 +161,12 @@ hpf(freq,q,gain) = fi.resonhp(max(freq,FILT_MIN),q,gain);
 //     - _: signal
 //     - freq: freq
 //     - q: Q
-//     - gain: control
 //   out:
 //     - _: signal
 // ...
-// STATUS: unknown
+// STATUS: works
 //----------------------------
-lpf(freq,q,gain) = fi.resonlp(max(freq,FILT_MIN),q,gain);
+lpf(freq,q) = fi.svf.lp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.sin)`----------
 // Sine wave oscillator
@@ -284,7 +287,7 @@ pulse(f,w) = os.pulsetrain(f,w);
 // STATUS: works
 //----------------------------
 
-osc(f,s) = (sin_o+tri_o+saw_o+sq_o) with {
+osc(f,s) = sin_o+tri_o+saw_o+sq_o with {
   gv = s * 4.0;
   duty =                 ba.listInterp((0.5,0.5,0.5,0.5,1.0),gv);
   sin_o = sine(f)      * ba.listInterp((1.0,0.0,0.0,0.0,0.0),gv);
@@ -560,11 +563,13 @@ output(vol) = vol*_;
 // STATUS: unknown
 // This is faust no.noise with increment parameterized.
 //----------------------------
-noise(C) = random / RANDMAX
+noise(C) = output
 with {
 	mask = 4294967295; // 2^32-1
 	random = +(C) ~ *(1103515245) & mask; // "linear congruential"
 	RANDMAX	= 2147483647.0; // = 2^31-1 = MAX_SIGNED_INT in 32 bits
+        out0 = random / RANDMAX;
+        output = out0;
 };
 
 //-------`(gac.notch)`----------
