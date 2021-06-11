@@ -102,9 +102,9 @@ PERIOD_DEFAULT = PERIOD_MIN;
 period2control(n) = n/PERIOD_MAX;
 control2period(n) = n*PERIOD_MAX;
 
-Q_MIN = 0.0;
-Q_MAX = 100.0;
 Q_STEP = 0.01;
+Q_MIN = Q_STEP;
+Q_MAX = 10.0;
 Q_DEFAULT = 1;
 Q2control(n) = n/Q_MAX;
 control2Q(n) = n*Q_MAX;

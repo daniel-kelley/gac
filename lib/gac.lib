@@ -102,7 +102,6 @@ amp(gain) = *(clamp(0.0, 1.0, gain));
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
-// * `gain`: Gain [control]
 //
 // ---
 // bpf:
@@ -110,13 +109,12 @@ amp(gain) = *(clamp(0.0, 1.0, gain));
 //     - _: signal
 //     - freq: freq
 //     - q: Q
-//     - gain: control
 //   out:
 //     - _: signal
 // ...
-// STATUS: broken
+// STATUS: works
 //----------------------------
-bpf(freq,q,gain) = fi.resonbp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q),clamp(0.0,1.0,gain));
+bpf(freq,q) = fi.svf.bp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.hpf)`----------
 // Highpass filter
@@ -130,7 +128,6 @@ bpf(freq,q,gain) = fi.resonbp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q)
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
-// * `gain`: Gain [control]
 //
 // ---
 // hpf:
@@ -138,13 +135,12 @@ bpf(freq,q,gain) = fi.resonbp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q)
 //     - _: signal
 //     - freq: freq
 //     - q: Q
-//     - gain: control
 //   out:
 //     - _: signal
 // ...
-// STATUS: broken
+// STATUS: works
 //----------------------------
-hpf(freq,q,gain) = fi.resonhp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q),clamp(0.0,1.0,gain));
+hpf(freq,q) = fi.svf.hp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.lpf)`----------
 // Lowpass filter
@@ -158,7 +154,6 @@ hpf(freq,q,gain) = fi.resonhp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q)
 //
 // * `freq`: Bandpass center [freq]
 // * `q`:    Filter [Q]
-// * `gain`: Gain [control]
 //
 // ---
 // lpf:
@@ -166,13 +161,12 @@ hpf(freq,q,gain) = fi.resonhp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q)
 //     - _: signal
 //     - freq: freq
 //     - q: Q
-//     - gain: control
 //   out:
 //     - _: signal
 // ...
-// STATUS: broken
+// STATUS: works
 //----------------------------
-lpf(freq,q,gain) = fi.resonlp(clamp(FILT_MIN,FILT_MIN,freq),clamp(Q_MIN,Q_MIN,q),clamp(0.0,1.0,gain));
+lpf(freq,q) = fi.svf.lp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
 //-------`(gac.sin)`----------
 // Sine wave oscillator
