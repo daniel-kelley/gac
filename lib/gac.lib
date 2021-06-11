@@ -511,8 +511,8 @@ osh(dur,gate) = ba.countdown(ba.sec2samp(dur), edge(gate,0.5)) : (_ != 0);
 //
 // Where:
 //
-// * `attack`: Attack time in didx while gate is high
-// * `release`: Release time in didx while gate is low
+// * `attack`: Attack time in seconds while gate is high
+// * `release`: Release time in seconds while gate is low
 // * `gate`: Input gate
 //
 // ---
@@ -668,3 +668,35 @@ ap(freq,q) = fi.svf.ap(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 // STATUS: works
 //----------------------------
 acc = fi.dcblocker;
+
+//-------`(gac.adsr)`----------
+// Attack/Decay/Sustain/Release envelope
+//
+// #### Usage
+//
+// ```
+// adsr(attack,decay,sustain,release,gate) : _
+// ```
+//
+// Where:
+//
+// * `attack`: Attack time in seconds while gate is high
+// * `decay`: Decay time in seconds while gate is high
+// * `sustain`: Sustain level
+// * `release`: Release time in seconds while gate is low
+// * `gate`: Input gate
+//
+// ---
+// adsr:
+//   in:
+//     - attack: period
+//     - decay: period
+//     - sustain: control
+//     - release: period
+//     - gate: logic
+//   out:
+//     - _: control
+// ...
+// STATUS: works
+//----------------------------
+adsr(attack,decay,sustain,release,gate) = en.adsr(attack,decay,sustain,release,gate);
