@@ -802,3 +802,28 @@ latch(gate) = ba.latch(gate);
 // STATUS: works
 //----------------------------
 env(attack,release) = an.amp_follower_ar(attack,release);
+
+//-------`(gac.comp)`----------
+// Comparator
+//
+// #### Usage
+//
+// ```
+// comp(level) : _
+// ```
+//
+// Where:
+//
+// * `level`: Trigger level
+//
+// ---
+// comp:
+//   in:
+//     - _: control
+//     - level: control
+//   out:
+//     - _: logic
+// ...
+// STATUS: works
+//----------------------------
+comp(level) = _>level;
