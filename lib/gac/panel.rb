@@ -173,7 +173,8 @@ EOS
     s << @output_names.join(",\n")
     s << ") = tgroup(\"top\","
     @block.each_with_index do |block,n|
-      t << "vgroup(\"[#{n}]#{block.name}\",#{block.fn_call})"
+      wstr = "%04d" % n
+      t << "vgroup(\"[#{wstr}]#{block.name}\",#{block.fn_call})"
     end
     s << t.join(",\n")
     s << ");"

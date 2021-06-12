@@ -202,7 +202,8 @@ class GAC::Block
   # Return the next faust UI widget number
   #
   def wnum
-    s = "[#{@widget_idx}]"
+    wstr = "%04d" % @widget_idx
+    s = "[#{wstr}]"
     @widget_idx += 1
     s
   end
