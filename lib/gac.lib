@@ -992,7 +992,7 @@ xnr(a,b) = xor(a,b) == 0;
 // #### Usage
 //
 // ```
-// fs(freq) : _
+// _ : fs(freq,mix) : _
 // ```
 //
 // Where:
@@ -1014,3 +1014,67 @@ xnr(a,b) = xor(a,b) == 0;
 fs(freq,mix) =
     fi.pospass6e(clamp(FILT_MIN,FILT_MAX,freq))
   : si.interpolate(clamp(0,1,mix));
+
+//-------`(gac.ws)`----------
+// Wave Shaper
+//
+// #### Usage
+//
+// ```
+// _ : ws(sel) : _
+// ```
+//
+// Where:
+//
+// * `sel`: Shape
+//
+// ---
+// ws:
+//   in:
+//     - _: signal
+//     - shape: control
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+ws(shape,x) = acc(ws_out) with {
+
+  x2 = x*x;
+  x3 = x2*x;
+  x4 = x3*x;
+  c44 =  8.0;
+  c42 = -8.0;
+  c40 =  1.0;
+  c33 =  4.0;
+  c31 = -3.0;
+  c22 =  2.0;
+  c20 = -1.0;
+
+  sv = clamp(0.0, 1.0, shape) * 14.0;
+
+  c1 = ba.listInterp(
+      (1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0),sv);
+  c2 = ba.listInterp(
+      (0.0,0.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,0.0),sv);
+  c3 = ba.listInterp(
+      (0.0,1.0,1.0,1.0,0.0,0.0,1.0,1.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0),sv);
+  c4 = ba.listInterp(
+      (0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0),sv);
+
+  d = c1+c2+c3+c4;
+  s = (1.0/max(d,1.0));
+  g1 = c1*s;
+  g2 = c2*s;
+  g3 = c3*s;
+  g4 = c4*s;
+
+  ws_out =
+      c44*g4*x4 +
+      c33*g3*x3 +
+      ((c42*g4)+(c22*g2))*x2 +
+      ((c31*g3)+g1)*x +
+      c40*g4 +
+      c20*g2;
+
+};
