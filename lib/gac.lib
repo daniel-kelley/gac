@@ -1078,3 +1078,31 @@ ws(shape,x) = acc(ws_out) with {
       c20*g2;
 
 };
+
+//-------`(gac.ks)`----------
+// Karplus-Strong Plucked String
+//
+// #### Usage
+//
+// ```
+// _ : ks(len,damp,gate) : _
+// ```
+//
+// Where:
+//
+// * `len`: Length (0..1) = 0 to 10 meters
+// * `damp`: Damping
+// * `gate`: Gate
+//
+// ---
+// ks:
+//   in:
+//     - freq: freq
+//     - damp: control
+//     - gate: logic
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+ks(freq,damp,gate) = pm.ks(pm.f2l(freq), clamp(0,1,damp), ba.impulsify(gate));
