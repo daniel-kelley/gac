@@ -26,8 +26,10 @@ declare license "LGPL-2.1-or-later";
 N = 256;
 
 // Filters hang system on 0 frequency
+// fs sets limit; was 10000
+
 FILT_MIN = 0.01;
-FILT_MAX = 10000.0;
+FILT_MAX = 7000.0;
 
 Q_MIN = 1.0;
 Q_MAX = 10.0;
@@ -983,3 +985,32 @@ nor(a,b) = a|b == 0;
 // STATUS: works
 //----------------------------
 xnr(a,b) = xor(a,b) == 0;
+
+//-------`(gac.fs)`----------
+// Frequency Shifter
+//
+// #### Usage
+//
+// ```
+// fs(freq) : _
+// ```
+//
+// Where:
+//
+// * `freq`: Shift frequency
+// * `mix`: Real/Complex mix
+//
+// ---
+// fs:
+//   in:
+//     - _: signal
+//     - freq: freq
+//     - mix: control
+//   out:
+//     - _: signal
+// ...
+// STATUS: works
+//----------------------------
+fs(freq,mix) =
+    fi.pospass6e(clamp(FILT_MIN,FILT_MAX,freq))
+  : si.interpolate(clamp(0,1,mix));
