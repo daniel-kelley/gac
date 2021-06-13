@@ -3,15 +3,18 @@
 #
 #  Copyright (c) 2021 by Daniel Kelley
 #
+# frozen_string_literal: true
 
 require 'yaml'
 require 'pp'
 
+#
+# GAC Faust library metadata reader
+#
 class GAC::LibReader
-
   attr_reader :data
 
-  GAC_LIB = File.dirname(__FILE__) + "/../gac.lib"
+  GAC_LIB = "#{File.dirname(__FILE__)}/../gac.lib"
 
   #
   # Init GAC
@@ -24,7 +27,7 @@ class GAC::LibReader
   # Show library info
   #
   def info
-    #pp @data
+    # pp @data
     puts @data.to_yaml
   end
 
@@ -35,7 +38,7 @@ class GAC::LibReader
   #
   def read_gac_lib
     h = {}
-    y = ""
+    y = String.new('')
     state = :search
     IO.foreach(GAC_LIB) do |line|
       case state
@@ -47,28 +50,33 @@ class GAC::LibReader
       when :collect
         line =~ %r{^//\s(.*)}
         arg = $1
-        if arg[0] == '.' # really ...
-          begin
-            block = YAML::load(y)
-            k = block.keys
-            raise "#{block.inspect} misformatted" if k.length != 1
-            raise "duplicate key #{k[0]}" if !h[k[0]].nil?
-            h.merge!(block)
-          rescue
-            pp(y)
-            raise "#{$!}"
-          end
+        if arg[0] == '.' # really '...'
+          yload(h, y)
           state = :search
         else
-          y << arg+"\n"
+          y << "#{arg}\n"
         end
       else
         raise 'oops'
       end
     end
-    h
+    h.freeze
   end
 
+  #
+  # Load YAML fragment frag into hash
+  #
+  def yload(hash, frag)
+    block = YAML.safe_load(frag)
+    k = block.keys
+    raise "#{block.inspect} misformatted" if k.length != 1
+    raise "duplicate key #{k[0]}" unless hash[k[0]].nil?
+
+    hash.merge!(block)
+  rescue StandardError
+    pp(frag)
+    raise $ERROR_INFO.to_s
+  end
 end
 
 GAC::Lib = GAC::LibReader.new
