@@ -3,7 +3,11 @@
 #
 #  Copyright (c) 2021 by Daniel Kelley
 #
+# frozen_string_literal: true
 
+#
+# GAG top level loader
+#
 module GAC
 end
 

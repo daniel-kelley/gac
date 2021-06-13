@@ -3,29 +3,33 @@
 #
 #  Copyright (c) 2021 by Daniel Kelley
 #
+# frozen_string_literal: true
 
 require 'set'
 
+#
+# GAC Processing block
+#
 class GAC::Block
   @instance_num = {} # indexed by :block, value is 1-based block instance
   @wave_num = 0
 
-  LCG_INCR_VAL = 12345
+  LCG_INCR_VAL = 12_345
   @lcg_incr_val = LCG_INCR_VAL
 
   GAC_N16 = 16
   SUBTYPE = {
-    "signal" => "signal",
-    "control" => "control",
-    "freq" => "control",
-    "period" => "control",
-    "Q" => "control",
-    "logic" => "logic",
-    "phase" => "count",
-    "count" => "count",
-    "button" => "logic",
-    "knob" => "control",
-  }
+    'signal'  => 'signal',
+    'control' => 'control',
+    'freq'    => 'control',
+    'period'  => 'control',
+    'Q'       => 'control',
+    'logic'   => 'logic',
+    'phase'   => 'count',
+    'count'   => 'count',
+    'button'  => 'logic',
+    'knob'    => 'control'
+  }.freeze
 
   InputArg = Struct.new(:block, :target)
 
@@ -44,7 +48,7 @@ class GAC::Block
   # the type of the block output.
   #
   #
-  def initialize(block_spec, knob="hslider")
+  def initialize(block_spec, knob = 'hslider')
     @knob = knob
     @lcg_incr = false
     @table = false
@@ -55,28 +59,16 @@ class GAC::Block
     @instance = self.class.instance(@block)
     @name = @block + @instance.to_s
     raise "Unknown block #{@block}" if @data.nil?
-    @output_name = @name + "_out"
-    if !@data['out'].nil?
-      # check for malformed out spec
-      raise "oops" if @data['out'].length != 1
-      raise "oops" if @data['out'][0]['_'].nil?
-      @output_type = @modifier || @data['out'][0]['_']
-      @out = data_to_hash('out')
-    else
-      # no block outputs, so assume faust signal output
-      @output_type = nil
-      @out = nil
-    end
+
+    @output_name = "#{@name}_out"
+    @out = init_out
+
     # key is input argument name, value is array of relevant InputArgs
     @input = {}
     # array in InputArgs in input order
     @input_args = []
     # convenience in args by name
-    if !@data['in'].nil?
-      @in = data_to_hash('in')
-    else
-      @in = nil
-    end
+    @in = init_in
     @subtype_inv = invert_subtype
     @widget_idx = 0
   end
@@ -86,16 +78,19 @@ class GAC::Block
   #
   def register_output(output)
     output_name_args = {} # for duplicate detection
-    output_name_args[self.output_name]=1 # skip self loops
+    output_name_args[output_name] = 1 # skip self loops
     avail_output_args = []
-    each_input do |input_name,input_type|
-      next if !output_type_name?(input_type)
+    each_input do |input_name, input_type|
+      next unless output_type_name?(input_type)
+
       base_input_type = SUBTYPE[input_type]
       raise "missing SUBTYPE[#{input_type}] " if base_input_type.nil?
+
       avail_output_in = []
 
-      each_compatible_output(output, input_type) do |itype,output_block|
+      each_compatible_output(output, input_type) do |itype, output_block|
         next if output_block == self # skip self loops
+
         iarg = InputArg.new(output_block, itype)
         avail_output_in << iarg
         if output_name_args[output_block.output_name].nil?
@@ -104,11 +99,11 @@ class GAC::Block
         end
       end
 
-      if avail_output_in.length > 0
+      if avail_output_in.length.positive?
         @input[input_name] = avail_output_in
       end
     end
-    if avail_output_args.length > 0
+    if avail_output_args.length.positive?
       @input_args << avail_output_args
     end
   end
@@ -118,7 +113,7 @@ class GAC::Block
   #
   def fn_call
     args = ''
-    if @input_args.length > 0
+    if @input_args.length.positive?
       input_names = @input_args.flatten.map { |iarg| iarg.block.output_name }
       input_args = input_names.join ','
       args = "(#{input_args})"
@@ -133,7 +128,7 @@ class GAC::Block
     s = []
     s << comment
     s << fn_call
-    s << "    ="
+    s << '    ='
     s << gac_call
     s << fn_with
     s
@@ -144,12 +139,13 @@ class GAC::Block
   # with input_type
   #
   def each_compatible_output(output, input_type)
-    raise 'oops' if !output_type_name?(input_type)
+    raise 'oops' unless output_type_name?(input_type)
+
     # create set of types compatible with input_type that are present
     # in output
     types = Set.new
     compatible_types(input_type).each do |itype|
-      types.add(itype) if !output[itype].nil?
+      types.add(itype) unless output[itype].nil?
     end
 
     # iterate across set of types and associated output blocks
@@ -159,7 +155,6 @@ class GAC::Block
       end
     end
   end
-
 
   #
   # Construct a conversion function that converts block output
@@ -176,16 +171,16 @@ class GAC::Block
   #
   def convert_fn(input_type)
     raise 'oops' if @output_type.nil?
+
     if input_type == @output_type
       # same types, so no conversion
       @output_name
-    elsif input_type == SUBTYPE[input_type]
-      "#{@output_type}2#{input_type}(#{@output_name})"
-    elsif @output_type == SUBTYPE[@output_type]
+    elsif input_type == SUBTYPE[input_type] ||
+          @output_type == SUBTYPE[@output_type]
       "#{@output_type}2#{input_type}(#{@output_name})"
     elsif SUBTYPE[input_type] == SUBTYPE[@output_type]
-      outer="#{SUBTYPE[input_type]}2#{input_type}"
-      inner="#{@output_type}2#{SUBTYPE[@output_type]}"
+      outer = "#{SUBTYPE[input_type]}2#{input_type}"
+      inner = "#{@output_type}2#{SUBTYPE[@output_type]}"
       "#{outer}(#{inner}(#{@output_name}))"
     else
       raise "oops: missing conversion #{input_type} #{@output_type}"
@@ -194,15 +189,42 @@ class GAC::Block
 
   private
 
-  def knob
-    @knob
+  attr_reader :knob
+
+  #
+  # Initialize 'in'
+  #
+  def init_in
+    if @data['in'].nil?
+      nil
+    else
+      data_to_hash('in')
+    end
+  end
+
+  #
+  # Initialize 'out'
+  #
+  def init_out
+    if @data['out'].nil?
+      # no block outputs, so assume faust signal output
+      @output_type = nil
+      nil
+    else
+      # check for malformed out spec
+      raise 'oops' if @data['out'].length != 1
+      raise 'oops' if @data['out'][0]['_'].nil?
+
+      @output_type = @modifier || @data['out'][0]['_']
+      data_to_hash('out')
+    end
   end
 
   #
   # Return the next faust UI widget number
   #
   def wnum
-    wstr = "%04d" % @widget_idx
+    wstr = format('%04d', @widget_idx)
     s = "[#{wstr}]"
     @widget_idx += 1
     s
@@ -224,7 +246,7 @@ class GAC::Block
   #
   def invert_subtype
     h = {}
-    SUBTYPE.each do |k,v|
+    SUBTYPE.each do |k, v|
       if h[v].nil?
         h[v] = []
       end
@@ -248,10 +270,12 @@ class GAC::Block
     @data[key].each do |item|
       raise 'oops' if item.keys.length != 1
       raise 'oops' if item.values.length != 1
+
       k = item.keys[0]
       v = item.values[0]
-      raise 'oops' if !h[h].nil?
-      h[k]=v
+      raise 'oops' unless h[v].nil?
+
+      h[k] = v
     end
     h
   end
@@ -272,9 +296,11 @@ class GAC::Block
   #
   def each_input
     return if @data['in'].nil? # no inputs
+
     @data['in'].each do |input|
       raise 'oops' if input.keys.length != 1
       raise 'oops' if input.values.length != 1
+
       input_name = input.keys[0]
       input_type = input[input_name]
       yield input_name, input_type
@@ -288,9 +314,9 @@ class GAC::Block
     sname, smax =
       case @modifier
       when nil
-        ["val","CONTROL_MAX"]
+        %w[val CONTROL_MAX]
       when 'freq'
-        ["freq","FREQ_MAX"]
+        %w[freq FREQ_MAX]
       else
         raise "needs support for #{@modifier}"
       end
@@ -302,17 +328,17 @@ class GAC::Block
   #
   def gac_args
     if @table
-      yield :table, nil, nil, (@block + '_table')
+      yield :table, nil, nil, "#{@block}_table"
     end
     if @table_pgm
-      yield :table_pgm_idx, nil, nil, (@block + '_pgm_idx')
-      yield :table_pgm_val, nil, nil, (@block + '_pgm_val')
-      yield :table_pgm_we, nil, nil, (@block + '_pgm_we')
+      yield :table_pgm_idx, nil, nil, "#{@block}_pgm_idx"
+      yield :table_pgm_val, nil, nil, "#{@block}_pgm_val"
+      yield :table_pgm_we, nil, nil, "#{@block}_pgm_we"
     end
     if @lcg_incr
-      yield :lcg_incr, nil, nil,  (@block + '_lcg_incr')
+      yield :lcg_incr, nil, nil, "#{@block}_lcg_incr"
     end
-    scan_inputs_iter do  |input_name,input_type,input_var|
+    scan_inputs_iter do |input_name, input_type, input_var|
       yield :input, input_name, input_type, input_var
     end
   end
@@ -326,19 +352,19 @@ class GAC::Block
     seq = ''
     args = []
     if @table
-      args << @block + '_table'
+      args << "#{@block}_table"
     end
     if @table_pgm
-      args << @block + '_pgm_idx'
-      args << @block + '_pgm_val'
-      args << @block + '_pgm_we'
+      args << "#{@block}_pgm_idx"
+      args << "#{@block}_pgm_val"
+      args << "#{@block}_pgm_we"
     end
     if @lcg_incr
-      args << @block + '_lcg_incr'
+      args << "#{@block}_lcg_incr"
     end
-    if !@in.nil? || args.length > 0
+    if !@in.nil? || args.length.positive?
       s << '('
-      s << (args+scan_inputs).join(',')
+      s << (args + scan_inputs).join(',')
       s << ')'
       # makes diff to prev generated output easier
       seq = ': '
@@ -357,22 +383,23 @@ class GAC::Block
   #
   def scan_inputs_iter
     partial_input = nil
-    each_input do |input_name,input_type|
+    each_input do |input_name, input_type|
       #
       # partial_inputs have to be added last
       #
       if input_name == '_'
-        if !partial_input.nil?
+        unless partial_input.nil?
           raise "#{name}: only one partial application allowed"
         end
-        partial_input = [input_name,input_type]
+
+        partial_input = [input_name, input_type]
       elsif !output_type_name?(input_type)
         # skip - no outputs will ever correspond to this input
       else
         yield input_name, input_type, input_name
       end
     end
-    if !partial_input.nil?
+    unless partial_input.nil?
       yield partial_input[0], partial_input[1], 'input'
     end
   end
@@ -383,7 +410,7 @@ class GAC::Block
   #
   def scan_inputs
     gac_inputs = []
-    scan_inputs_iter do |input_name,input_type,input_var|
+    scan_inputs_iter do |_input_name, _input_type, input_var|
       gac_inputs << input_var
     end
     gac_inputs
@@ -392,11 +419,10 @@ class GAC::Block
   #
   # Return a clamp function on var for a given type
   #
-  def clampfn(type,var)
+  def clampfn(type, var)
     utype = type.upcase
     "gac.clamp((-#{utype}_MAX),#{utype}_MAX,#{var})"
   end
-
 
   #
   # Construct a faust waveform for a GAC table argument
@@ -405,14 +431,14 @@ class GAC::Block
     s = []
     s << "    #{arg} = waveform {"
     GAC_N16.times do
-      s << "    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"
+      s << '    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'
     end
     # waveform disambiguator - otherwise the compiler will use the
     # table waveform instance for all tables. This just forces a
     # unique number for the 'dummy entry'. The '.0' forces the waveform
     # to be all floats.
     s << "    #{self.class.wavenum}.0"
-    s << "    };"
+    s << '    };'
     s
   end
 
@@ -424,7 +450,7 @@ class GAC::Block
     s << "    #{arg}_f ="
     s << "        nentry(\"#{wnum}widx\",0,0,gac.N-1,1);"
     s << "    #{arg} = int(floor(#{arg}_f));"
-    s << ""
+    s << ''
     s
   end
 
@@ -465,8 +491,8 @@ class GAC::Block
   #
   # Construct a faust control for a given GAC input type
   #
-  def construct_knob(label, typename, allow_inversion=false)
-    a = ["_DEFAULT","_MIN","_MAX","_STEP"].map do |s|
+  def construct_knob(label, typename, allow_inversion = false)
+    a = %w[_DEFAULT _MIN _MAX _STEP].map do |s|
       typename.upcase + s
     end
 
@@ -477,15 +503,15 @@ class GAC::Block
     end
 
     inp_knob = "#{knob}(\"#{wnum}#{label}\","
-    inp_knob << a.join(",")
-    inp_knob << ")"
+    inp_knob << a.join(',')
+    inp_knob << ')'
     inp_knob
   end
 
   #
   # Construct a faust control for GAC button input type
   #
-  def construct_input_button(name, type, arg)
+  def construct_input_button(name, _type, arg)
     s = []
     s << "    #{arg} ="
     s << "        button(\"#{wnum}#{name}\");"
@@ -502,33 +528,32 @@ class GAC::Block
   #
   # Construct a faust control for GAC Q input type
   #
-  def construct_input_Q(name, type, arg)
+  def construct_input_q(name, type, arg)
     construct_input_control(name, type, arg)
   end
 
   #
   # Construct a faust control for GAC logic input type
   #
-  def construct_input_logic(name, type, arg)
+  def construct_input_logic(name, _type, arg)
     s = []
     inp = []
     vname = varname(name)
-    inp << "enable_"+vname
+    inp << "enable_#{vname}"
     s << "    #{inp[0]} ="
     s << "        checkbox(\"#{wnum}#{vname}_enable\");"
-    if !@input[name].nil?
-      @input[name].each do |iarg|
-        raise 'oops' if SUBTYPE[iarg.target] != "logic"
-        output = iarg.block.name
-        inp_name = output + "_#{vname}_in"
-        inp_knob = "checkbox(\"#{wnum}#{vname}_#{output}\")"
-        s << "    #{inp_name} ="
-        s << "        #{iarg.block.output_name}"
-        s << "        & #{inp_knob};"
-        inp << inp_name
-      end
+    @input[name]&.each do |iarg|
+      raise 'oops' if SUBTYPE[iarg.target] != 'logic'
+
+      output = iarg.block.name
+      inp_name = output + "_#{vname}_in"
+      inp_knob = "checkbox(\"#{wnum}#{vname}_#{output}\")"
+      s << "    #{inp_name} ="
+      s << "        #{iarg.block.output_name}"
+      s << "        & #{inp_knob};"
+      inp << inp_name
     end
-    s << "    " + arg + "\n        =" + inp.join("\n        |") + ";"
+    s << "    #{arg}\n        =#{inp.join("\n        |")};"
     s
   end
 
@@ -538,7 +563,7 @@ class GAC::Block
   # Ensure that name '_' is expanded to a valid faust ident
   #
   def varname(name)
-    (name == '_') ? 'input' : name;
+    name == '_' ? 'input' : name
   end
 
   #
@@ -550,30 +575,28 @@ class GAC::Block
     vname = varname(name)
     inp << "#{vname}_knob"
     s << "    #{inp[0]} ="
-    s << "        " + construct_knob(vname,type)+";"
+    s << "        #{construct_knob(vname, type)};"
 
-    if !@input[name].nil?
-      @input[name].each do |iarg|
-        output = iarg.block.name
-        inp_name = output + "_#{vname}"
-        target = iarg.target
-        # special case for 'count' gain knobs to use 'control' range
-        # otherwise the result would be nonsensical "count*count"
-        if iarg.target == 'count'
-          target = 'control'
-        end
-        inp_knob = construct_knob(output+'_'+vname,target,true)
-        inp_cvt = "    #{inp_name}_cvt = " + iarg.block.convert_fn(type)
-        s << inp_cvt+';'
-        s << "    #{inp_name} ="
-        s << "        #{inp_name}_cvt"
-        s << "        * #{inp_knob};"
-        inp << inp_name
+    @input[name]&.each do |iarg|
+      output = iarg.block.name
+      inp_name = output + "_#{vname}"
+      target = iarg.target
+      # special case for 'count' gain knobs to use 'control' range
+      # otherwise the result would be nonsensical "count*count"
+      if iarg.target == 'count'
+        target = 'control'
       end
+      inp_knob = construct_knob("#{output}_#{vname}", target, true)
+      inp_cvt = "    #{inp_name}_cvt = " + iarg.block.convert_fn(type)
+      s << "#{inp_cvt};"
+      s << "    #{inp_name} ="
+      s << "        #{inp_name}_cvt"
+      s << "        * #{inp_knob};"
+      inp << inp_name
     end
-    sigma_var = vname + '_sigma'
-    s << "    #{sigma_var} = " + inp.join("\n        + ") + ";"
-    s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
+    sigma_var = "#{vname}_sigma"
+    s << "    #{sigma_var} = #{inp.join("\n        + ")};"
+    s << "    #{arg} = #{clampfn(type, sigma_var)};"
     s
   end
 
@@ -597,20 +620,19 @@ class GAC::Block
   def construct_input_signal(name, type, arg)
     s = []
     inp = []
-    if !@input[name].nil?
-      @input[name].each do |iarg|
-        raise 'oops' if iarg.target != "signal"
-        output = iarg.block.name
-        inp_name = output + "_#{arg}_in"
-        knob_name = output + "_#{arg}"
-        inp_knob = construct_knob(knob_name,iarg.target,true)
-        s << "    #{inp_name} = #{iarg.block.output_name} * #{inp_knob};"
-        inp << inp_name
-      end
+    @input[name]&.each do |iarg|
+      raise 'oops' if iarg.target != 'signal'
+
+      output = iarg.block.name
+      inp_name = output + "_#{arg}_in"
+      knob_name = output + "_#{arg}"
+      inp_knob = construct_knob(knob_name, iarg.target, true)
+      s << "    #{inp_name} = #{iarg.block.output_name} * #{inp_knob};"
+      inp << inp_name
     end
-    sigma_var = arg + '_sigma'
-    s << "    #{sigma_var} = " + inp.join("\n        + ") + ";"
-    s << "    " + arg + " = " + clampfn(type, sigma_var) + ";"
+    sigma_var = "#{arg}_sigma"
+    s << "    #{sigma_var} = #{inp.join("\n        + ")};"
+    s << "    #{arg} = #{clampfn(type, sigma_var)};"
     s
   end
 
@@ -620,37 +642,40 @@ class GAC::Block
   def fn_with
     needs_with = false
     s = []
-    s << "with {"
+    s << 'with {'
     gac_args do |arg_type, input_name, input_type, arg_name|
-      if input_name.nil?
-        s << method("construct_"+arg_type.to_s).call(arg_name)
-      else
-        s << method("construct_"+arg_type.to_s+"_"+input_type).call(
-                    input_name, input_type, arg_name)
-      end
+      s << if input_name.nil?
+             method("construct_#{arg_type}").call(arg_name)
+           else
+             method("construct_#{arg_type}_#{input_type.downcase}").call(
+               input_name, input_type, arg_name
+             )
+           end
       needs_with = true
     end
-    s << "};"
-    s << ""
-    needs_with ? s : [";"]
+    s << '};'
+    s << ''
+    needs_with ? s : [';']
   end
 
   #
   # Expand the input block specification
   #
   def expand_spec(block_spec)
-    if block_spec.is_a?(String)
+    case block_spec
+    when String
       @block = block_spec
-    elsif block_spec.is_a?(Hash)
+    when Hash
       raise 'oops' if block_spec.keys.length != 1
+
       @block = block_spec.keys[0]
       @modifier = block_spec[@block]
       if SUBTYPE[@modifier].nil?
         raise "Unsupported modifier #{@modifier} in #{block_spec.inspect}"
       end
     else
-      raise "Unsupported class '#{block_spec.class}' " +
-        "for block specification #{block_spec.inspect}"
+      raise "Unsupported class '#{block_spec.class}' " \
+      "for block specification #{block_spec.inspect}"
     end
     @data = GAC::Lib.data[@block]
   end
@@ -660,17 +685,20 @@ class GAC::Block
   #
   def expand_properties
     # see if this block has table or table_pgm input properties
-    each_input do |input_name,input_type|
+    each_input do |_input_name, input_type|
       # this can only handle one of these at a time
       case input_type
       when 'table'
         raise "Only one #{input_type} allowed per block" if @table
+
         @table = true
       when 'table_pgm'
         raise "Only one #{input_type} allowed per block" if @table_pgm
+
         @table_pgm = true
       when 'lcg_incr'
         raise "Only one #{input_type} allowed per block" if @lcg_incr
+
         @lcg_incr = true
       end
     end
@@ -680,7 +708,6 @@ class GAC::Block
   # Class definitions
   #
   class<<self
-
     #
     # Return a new instance name for this block
     #
@@ -712,10 +739,8 @@ class GAC::Block
     #
     def lcg_incr
       val = @lcg_incr_val
-      @lcg_incr_val += (LCG_INCR_VAL+1)
+      @lcg_incr_val += (LCG_INCR_VAL + 1)
       val
     end
-
   end
-
 end

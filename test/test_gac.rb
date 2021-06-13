@@ -13,7 +13,6 @@ require_relative '../lib/gac'
 # GAC test cases
 #
 class TestU3S < Test::Unit::TestCase
-
   #
   # Make sure lib spec exists
   #
@@ -28,8 +27,8 @@ class TestU3S < Test::Unit::TestCase
     modules = GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
     spec = { 'blocks' => modules }
     name = 'test_gac_002'
-    spec_path = name + '.yml'
-    dsp_path = name + '.dsp'
+    spec_path = "#{name}.yml"
+    dsp_path = "#{name}.dsp"
     file = File.new(spec_path, 'w')
     file.write(spec.to_yaml)
     file.close
@@ -49,7 +48,7 @@ class TestU3S < Test::Unit::TestCase
   # Generate a sine/output panel
   #
   def test_gac_003
-    spec = { 'blocks' => [ 'sine', 'output' ] }
+    spec = { 'blocks' => %w[sine output] }
     spec_path = 'test_gac_003.yml'
     dsp_path = 'test_gac_003.dsp'
     file = File.new(spec_path, 'w')
@@ -65,7 +64,7 @@ class TestU3S < Test::Unit::TestCase
   # Generate a noise/noise/output panel
   #
   def test_gac_004
-    spec = { 'blocks' => [ 'noise', 'noise', 'output' ] }
+    spec = { 'blocks' => %w[noise noise output] }
     spec_path = 'test_gac_004.yml'
     dsp_path = 'test_gac_004.dsp'
     file = File.new(spec_path, 'w')
@@ -76,5 +75,4 @@ class TestU3S < Test::Unit::TestCase
     status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
     assert(status)
   end
-
 end
