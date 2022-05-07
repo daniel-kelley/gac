@@ -8,8 +8,10 @@
 
 all:
 
-test: style
+test: check_style check_code
+
+check_code:
 	$(MAKE) -C test clean all
 
-style:
+check_style:
 	rubocop
