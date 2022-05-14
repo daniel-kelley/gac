@@ -12,7 +12,44 @@ require_relative '../lib/gac'
 #
 # GAC test cases
 #
-class TestU3S < Test::Unit::TestCase
+class TestGAC < Test::Unit::TestCase
+  #
+  # Builders
+  #
+  def gac_build(name, spec)
+    spec_path = "#{name}.yml"
+    dsp_path = "#{name}.dsp"
+    file = File.new(spec_path, 'w')
+    file.write(spec.to_yaml)
+    file.close
+    status = system("../bin/panel #{spec_path} > #{dsp_path}")
+    assert(status)
+    status = system("faust2jaqt -me -I ../lib -json -svg -osc #{dsp_path}")
+    assert(status)
+    status = system("faust -me -lang c -I ../lib/ -a faust/architecture/testdvr.c #{dsp_path} > #{name}_driver.c")
+    assert(status)
+    status = system("make #{name}_driver")
+    assert(status)
+    status = system("./#{name}_driver -n 1000000")
+    assert(status)
+  end
+
+  def gac_jack(name, spec)
+    dsp_path = "#{name}.dsp"
+    spec_path = "#{name}.yml"
+    file = File.new(spec_path, 'w')
+    file.write(spec.to_yaml)
+    file.close
+    status = system("../bin/panel #{spec_path} > #{dsp_path}")
+    assert(status)
+    status = system("faust2jaqt -me -I ../lib -json -svg -osc #{dsp_path}")
+    assert(status)
+  end
+
+  def gac_modules
+    GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
+  end
+
   #
   # Make sure lib spec exists
   #
@@ -24,24 +61,8 @@ class TestU3S < Test::Unit::TestCase
   # Generate a panel with one of each GAC module
   #
   def test_gac_002
-    modules = GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
-    spec = { 'blocks' => modules }
-    name = 'test_gac_002'
-    spec_path = "#{name}.yml"
-    dsp_path = "#{name}.dsp"
-    file = File.new(spec_path, 'w')
-    file.write(spec.to_yaml)
-    file.close
-    status = system("../bin/panel #{spec_path} > #{dsp_path}")
-    assert(status)
-    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
-    assert(status)
-    status = system("faust -lang c -I ../lib/ -a faust/architecture/testdvr.c #{dsp_path} > #{name}_driver.c")
-    assert(status)
-    status = system("make #{name}_driver")
-    assert(status)
-    status = system("./#{name}_driver -n 1000000")
-    assert(status)
+    spec = { 'blocks' => gac_modules }
+    gac_build('test_gac_002', spec)
   end
 
   #
@@ -49,15 +70,7 @@ class TestU3S < Test::Unit::TestCase
   #
   def test_gac_003
     spec = { 'blocks' => %w[sine output] }
-    spec_path = 'test_gac_003.yml'
-    dsp_path = 'test_gac_003.dsp'
-    file = File.new(spec_path, 'w')
-    file.write(spec.to_yaml)
-    file.close
-    status = system("../bin/panel #{spec_path} > #{dsp_path}")
-    assert(status)
-    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
-    assert(status)
+    gac_jack('test_gac_003', spec)
   end
 
   #
@@ -65,14 +78,6 @@ class TestU3S < Test::Unit::TestCase
   #
   def test_gac_004
     spec = { 'blocks' => %w[noise noise output] }
-    spec_path = 'test_gac_004.yml'
-    dsp_path = 'test_gac_004.dsp'
-    file = File.new(spec_path, 'w')
-    file.write(spec.to_yaml)
-    file.close
-    status = system("../bin/panel #{spec_path} > #{dsp_path}")
-    assert(status)
-    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
-    assert(status)
+    gac_jack('test_gac_004', spec)
   end
 end
