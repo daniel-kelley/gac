@@ -214,7 +214,7 @@ sine(f) = os.oscsin(f);
 // ...
 // STATUS: works
 //----------------------------
-tri(f) = os.triangle(f);
+tri(f) = os.lf_triangle(f);
 
 //-------`(gac.saw)`----------
 // Sawtooth wave oscillator
@@ -237,7 +237,7 @@ tri(f) = os.triangle(f);
 // ...
 // STATUS: works
 //----------------------------
-saw(f) = os.sawtooth(f);
+saw(f) = os.lf_saw(f);
 
 //-------`(gac.pulse)`----------
 // Pulse wave oscillator
@@ -262,7 +262,7 @@ saw(f) = os.sawtooth(f);
 // ...
 // STATUS: works
 //----------------------------
-pulse(f,w) = os.pulsetrain(f,w);
+pulse(f,w) = os.lf_pulsetrain(f,w);
 
 
 //-------`(gac.osc)`----------

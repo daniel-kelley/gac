@@ -13,7 +13,6 @@ require_relative '../lib/gac'
 # GAC test cases
 #
 class TestGAC < Test::Unit::TestCase
-
   #
   # Builders
   #
@@ -25,7 +24,7 @@ class TestGAC < Test::Unit::TestCase
     file.close
     status = system("../bin/panel #{spec_path} > #{dsp_path}")
     assert(status)
-    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
+    status = system("faust2jaqt -me -I ../lib -json -svg -osc #{dsp_path}")
     assert(status)
     status = system("faust -me -lang c -I ../lib/ -a faust/architecture/testdvr.c #{dsp_path} > #{name}_driver.c")
     assert(status)
@@ -43,12 +42,12 @@ class TestGAC < Test::Unit::TestCase
     file.close
     status = system("../bin/panel #{spec_path} > #{dsp_path}")
     assert(status)
-    status = system("faust2jaqt -I ../lib -json -svg -osc #{dsp_path}")
+    status = system("faust2jaqt -me -I ../lib -json -svg -osc #{dsp_path}")
     assert(status)
   end
 
   def gac_modules
-   GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
+    GAC::Lib.data.keys.reject { |k| k =~ /^[A-Z]+/ }
   end
 
   #
@@ -70,8 +69,8 @@ class TestGAC < Test::Unit::TestCase
   # Generate a sine/output panel
   #
   def test_gac_003
-    spec = { 'blocks' => %w[sine output]  }
-    gac_jack("test_gac_003", spec)
+    spec = { 'blocks' => %w[sine output] }
+    gac_jack('test_gac_003', spec)
   end
 
   #
