@@ -165,7 +165,7 @@ class GAC::Block
   # Two conversions are required if both the output and input types
   # are subtypes of a common type (such as period and frequency).
   #
-  # If there is no converion required, then simply return the output.
+  # If there is no conversion required, then simply return the output.
   #
   # input is destination, output is source
   #
@@ -558,7 +558,7 @@ class GAC::Block
   end
 
   #
-  # Construct (part of) a variable name fromthe given name.
+  # Construct (part of) a variable name from the given name.
   #
   # Ensure that name '_' is expanded to a valid faust ident
   #
