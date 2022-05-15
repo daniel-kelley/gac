@@ -170,7 +170,7 @@ hpf(freq,q) = fi.svf.hp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 //----------------------------
 lpf(freq,q) = fi.svf.lp(clamp(FILT_MIN,FILT_MAX,freq),clamp(Q_MIN,Q_MAX,q));
 
-//-------`(gac.sin)`----------
+//-------`(gac.sine)`---------
 // Sine wave oscillator
 // #### Usage
 //
@@ -482,7 +482,7 @@ index(clk,len) =
 // #### Usage
 //
 // ```
-// oneshot(dur,gate) : _
+// osh(dur,gate) : _
 // ```
 //
 // Where:
@@ -888,7 +888,7 @@ or(a,b) = a|b == 1;
 // #### Usage
 //
 // ```
-// xor(a,b) : _
+// xr(a,b) : _
 // ```
 //
 // Where:
@@ -935,7 +935,7 @@ xr(a,b) = xor(a,b) == 1;
 nand(a,b) = a&b == 0;
 
 //-------`(gac.nor)`----------
-// OR Gate
+// NOR Gate
 //
 // #### Usage
 //
